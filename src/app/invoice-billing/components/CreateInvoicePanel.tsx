@@ -616,10 +616,11 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
       </div>
 
       <form
+        id="create-invoice-form"
         onSubmit={handleSubmit(onSubmit)}
-        className="flex-1 overflow-y-auto scrollbar-thin"
+        className="flex-1 min-h-0 overflow-y-auto scrollbar-thin"
       >
-        <div className="px-6 py-5 space-y-6 max-w-2xl">
+        <div className="px-3 md:px-6 py-5 pb-28 md:pb-5 space-y-6 max-w-2xl">
 
           {/* Customer Section */}
           <div className="card border border-border p-4 space-y-4">
@@ -1503,53 +1504,57 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
           </div>
         </div>
 
-        {/* Sticky footer */}
-        <div className="sticky bottom-0 bg-card border-t border-border px-6 py-4 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="btn-secondary px-5"
-          >
-            Cancel
-          </button>
-
-          <div className="sticky bottom-0 flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground">
-                Invoice Total
-              </p>
-
-              <p className="font-mono-nums font-bold text-foreground">
-                ₹
-                {total.toLocaleString(
-                  'en-IN',
-                )}
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={
-                isSubmitting ||
-                fields.length === 0
-              }
-              className="btn-primary flex items-center gap-2 px-6 py-2.5 min-w-[160px] justify-center"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2
-                    size={15}
-                    className="animate-spin"
-                  />
-                  Saving...
-                </>
-              ) : (
-                <>Create Invoice</>
-              )}
-            </button>
-          </div>
-        </div>
       </form>
+
+      {/* Fixed Billing Action Bar */}
+      <div
+        className="fixed left-0 right-0 bottom-0 z-[100] bg-card border-t border-border shadow-[0_-4px_16px_rgba(0,0,0,0.08)] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:static md:shadow-none md:px-6 md:py-4 md:pb-4 flex items-center justify-between gap-2"
+      >
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="btn-secondary px-4 md:px-5"
+        >
+          Cancel
+        </button>
+
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="text-right">
+            <p className="text-[10px] md:text-xs text-muted-foreground">
+              Invoice Total
+            </p>
+
+            <p className="font-mono-nums font-bold text-foreground text-sm md:text-base">
+              ₹
+              {total.toLocaleString(
+                'en-IN',
+              )}
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            form="create-invoice-form"
+            disabled={
+              isSubmitting ||
+              fields.length === 0
+            }
+            className="btn-primary flex items-center gap-2 px-4 md:px-6 py-2.5 min-w-[135px] md:min-w-[160px] justify-center"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2
+                  size={15}
+                  className="animate-spin"
+                />
+                Saving...
+              </>
+            ) : (
+              <>Create Invoice</>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

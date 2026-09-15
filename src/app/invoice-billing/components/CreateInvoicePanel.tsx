@@ -1513,7 +1513,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
             Cancel
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="sticky bottom-0 flex items-center gap-3">
             <div className="text-right">
               <p className="text-xs text-muted-foreground">
                 Invoice Total

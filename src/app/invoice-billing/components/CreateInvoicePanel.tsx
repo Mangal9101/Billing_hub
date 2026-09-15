@@ -620,7 +620,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
         onSubmit={handleSubmit(onSubmit)}
         className="flex-1 min-h-0 overflow-y-auto scrollbar-thin"
       >
-        <div className="px-3 md:px-6 py-5 pb-28 md:pb-5 space-y-6 max-w-2xl">
+        <div className="px-3 md:px-6 py-5 pb-5 space-y-6 max-w-2xl">
 
           {/* Customer Section */}
           <div className="card border border-border p-4 space-y-4">
@@ -1502,14 +1502,10 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
               className="input-field text-sm resize-none"
             />
           </div>
-        </div>
-
-      </form>
-
-      {/* Fixed Billing Action Bar */}
-      <div
-        className="fixed left-0 right-0 bottom-0 z-[100] bg-card border-t border-border shadow-[0_-4px_16px_rgba(0,0,0,0.08)] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:static md:shadow-none md:px-6 md:py-4 md:pb-4 flex items-center justify-between gap-2"
-      >
+        {/* Invoice Total + Create Invoice */}
+        <div
+          className="border-t border-border bg-card px-3 md:px-0 py-4 flex items-center justify-between gap-2"
+        >
         <button
           type="button"
           onClick={handleCancel}
@@ -1534,7 +1530,6 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
 
           <button
             type="submit"
-            form="create-invoice-form"
             disabled={
               isSubmitting ||
               fields.length === 0
@@ -1554,7 +1549,9 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
             )}
           </button>
         </div>
+        </div>
       </div>
+      </form>
     </div>
   );
 }

@@ -40,307 +40,77 @@
 }
 
 @layer base {
-  * {
-    box-sizing: border-box;
-    border-color: var(--border);
-  }
-
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
-  h1, h2, h3, h4, h5, h6, p {
-    margin: 0;
-  }
+  * { box-sizing: border-box; border-color: var(--border); }
+  body { background-color: var(--background); color: var(--foreground); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  html { scroll-behavior: smooth; }
+  h1, h2, h3, h4, h5, h6, p { margin: 0; }
 }
 
 @layer utilities {
-  .font-mono-nums {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: var(--muted) transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: var(--muted);
-    border-radius: 2px;
-  }
-
-  .sidebar-transition {
-    transition: width 300ms ease, min-width 300ms ease;
-  }
-
-  .fade-in {
-    animation: fadeIn 200ms ease forwards;
-  }
-
-  .slide-up {
-    animation: slideUp 200ms ease forwards;
-  }
-
-  .scale-in {
-    animation: scaleIn 150ms ease forwards;
-  }
-
-  .invoice-print-area {
-    font-family: var(--font-sans);
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.96); }
-    to { opacity: 1; transform: scale(1); }
-  }
-
-  .bg-gradient-brand {
-    background: linear-gradient(135deg, #92400e 0%, #b45309 50%, #d97706 100%);
-  }
-
-  .text-inr::before {
-    content: '₹';
-  }
+  .font-mono-nums { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .text-balance { text-wrap: balance; }
+  .scrollbar-thin { scrollbar-width: thin; scrollbar-color: var(--muted) transparent; }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background-color: var(--muted); border-radius: 2px; }
+  .sidebar-transition { transition: width 300ms ease, min-width 300ms ease; }
+  .fade-in { animation: fadeIn 200ms ease forwards; }
+  .slide-up { animation: slideUp 200ms ease forwards; }
+  .scale-in { animation: scaleIn 150ms ease forwards; }
+  .invoice-print-area { font-family: var(--font-sans); }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+  .bg-gradient-brand { background: linear-gradient(135deg, #92400e 0%, #b45309 50%, #d97706 100%); }
+  .text-inr::before { content: '₹'; }
 }
 
 @layer components {
-  .btn-primary {
-    @apply bg-primary text-primary-foreground font-medium px-4 py-2 rounded-lg
-      hover:opacity-90 active:scale-95 transition-all duration-150
-      disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100;
-  }
-
-  .btn-secondary {
-    @apply bg-secondary text-secondary-foreground font-medium px-4 py-2 rounded-lg
-      hover:bg-muted active:scale-95 transition-all duration-150
-      disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-
-  .btn-ghost {
-    @apply text-muted-foreground font-medium px-3 py-2 rounded-lg
-      hover:bg-secondary hover:text-foreground active:scale-95 transition-all duration-150;
-  }
-
-  .card {
-    @apply bg-card border border-border rounded-xl shadow-sm;
-  }
-
-  .input-field {
-    @apply w-full bg-input border border-border rounded-lg px-3 py-2 text-sm
-      text-foreground placeholder:text-muted-foreground
-      focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
-      transition-all duration-150;
-  }
-
-  .badge-paid {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-      bg-[var(--status-paid-bg)] text-[var(--status-paid)];
-  }
-
-  .badge-partial {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-      bg-[var(--status-partial-bg)] text-[var(--status-partial)];
-  }
-
-  .badge-credit {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-      bg-[var(--status-credit-bg)] text-[var(--status-credit)];
-  }
-
-  .badge-draft {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-      bg-[var(--status-draft-bg)] text-[var(--status-draft)];
-  }
-
-  .payment-cash {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-      bg-[var(--payment-cash-bg)] text-[var(--payment-cash)];
-  }
-
-  .payment-upi {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-      bg-[var(--payment-upi-bg)] text-[var(--payment-upi)];
-  }
-
-  .payment-credit {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-      bg-[var(--payment-credit-bg)] text-[var(--payment-credit)];
-  }
+  .btn-primary { @apply bg-primary text-primary-foreground font-medium px-4 py-2 rounded-lg hover:opacity-90 active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100; }
+  .btn-secondary { @apply bg-secondary text-secondary-foreground font-medium px-4 py-2 rounded-lg hover:bg-muted active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-ghost { @apply text-muted-foreground font-medium px-3 py-2 rounded-lg hover:bg-secondary hover:text-foreground active:scale-95 transition-all duration-150; }
+  .card { @apply bg-card border border-border rounded-xl shadow-sm; }
+  .input-field { @apply w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-150; }
+  .badge-paid { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--status-paid-bg)] text-[var(--status-paid)]; }
+  .badge-partial { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--status-partial-bg)] text-[var(--status-partial)]; }
+  .badge-credit { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--status-credit-bg)] text-[var(--status-credit)]; }
+  .badge-draft { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--status-draft-bg)] text-[var(--status-draft)]; }
+  .payment-cash { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--payment-cash-bg)] text-[var(--payment-cash)]; }
+  .payment-upi { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--payment-upi-bg)] text-[var(--payment-upi)]; }
+  .payment-credit { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--payment-credit-bg)] text-[var(--payment-credit)]; }
 }
 
 @media print {
   body { background: white; }
   body * { visibility: hidden !important; }
-  .invoice-print-area,
-  .invoice-print-area * { visibility: visible !important; }
-  .invoice-print-area {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-  }
+  .invoice-print-area, .invoice-print-area * { visibility: visible !important; }
+  .invoice-print-area { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; border: 0 !important; box-shadow: none !important; margin: 0 !important; }
   .no-print { display: none !important; }
   .print-only { display: block !important; }
 }
 
-/* =========================================================
-   MOBILE DATA TABLES
-   Desktop: normal table
-   Mobile (<= 767px): each row becomes a clean vertical card.
-   Recommended mobile sizes:
-   - label: 11px
-   - value: 13px
-   - table/card body: 13px
-   ========================================================= */
 @media (max-width: 767px) {
-  body {
-    font-size: 14px;
-  }
-
-  .mobile-data-table {
-    width: 100% !important;
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-    display: block !important;
-  }
-
-  .mobile-data-table thead {
-    display: none !important;
-  }
-
-  .mobile-data-table tbody {
-    display: block !important;
-    width: 100% !important;
-  }
-
-  .mobile-data-table tbody > tr {
-    display: block !important;
-    width: 100% !important;
-    margin: 0 0 10px !important;
-    padding: 10px 12px !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 12px !important;
-    background: var(--card) !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,.04) !important;
-  }
-
-  .mobile-data-table tbody > tr:last-child {
-    margin-bottom: 0 !important;
-  }
-
-  .mobile-data-table tbody > tr > td {
-    display: flex !important;
-    align-items: flex-start !important;
-    justify-content: space-between !important;
-    gap: 12px !important;
-    width: 100% !important;
-    min-height: 34px !important;
-    padding: 7px 2px !important;
-    border: 0 !important;
-    text-align: right !important;
-    font-size: 13px !important;
-    line-height: 1.35 !important;
-  }
-
-  .mobile-data-table tbody > tr > td::before {
-    content: attr(data-label);
-    flex: 0 0 34%;
-    max-width: 42%;
-    text-align: left;
-    color: var(--muted-foreground);
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.3;
-  }
-
-  .mobile-data-table tbody > tr > td:first-child {
-    padding-top: 4px !important;
-  }
-
-  .mobile-data-table tbody > tr > td:last-child {
-    padding-bottom: 4px !important;
-  }
-
-  .mobile-data-table tbody > tr > td > * {
-    max-width: 66%;
-  }
-
-  .mobile-data-table tbody > tr > td[data-label=""]::before {
-    display: none;
-  }
-
-  .mobile-data-table .mobile-table-empty {
-    display: block !important;
-    text-align: center !important;
-    padding: 28px 10px !important;
-  }
-
-  .mobile-data-table .mobile-table-empty::before {
-    display: none !important;
-  }
-
-  /* Make previously hidden desktop columns visible in mobile cards. */
-  .mobile-data-table tbody > tr > td.hidden,
-  .mobile-data-table tbody > tr > td[class*="hidden"] {
-    display: flex !important;
-  }
-
-  /* Nested purchase-item tables remain compact vertical cards. */
-  .mobile-data-table .mobile-data-table {
-    margin-top: 4px;
-  }
-
-  .mobile-data-table .mobile-data-table tbody > tr {
-    box-shadow: none !important;
-    background: var(--secondary) !important;
-  }
-
-  /* Long IDs/emails/reasons should wrap instead of breaking the page. */
-  .mobile-data-table .font-mono,
-  .mobile-data-table .font-mono-nums {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
+  body { font-size: 14px; }
+  .mobile-data-table { width: 100% !important; border-collapse: separate !important; border-spacing: 0 !important; display: block !important; }
+  .mobile-data-table thead { display: none !important; }
+  .mobile-data-table tbody { display: block !important; width: 100% !important; }
+  .mobile-data-table tbody > tr { display: block !important; width: 100% !important; margin: 0 0 10px !important; padding: 10px 12px !important; border: 1px solid var(--border) !important; border-radius: 12px !important; background: var(--card) !important; box-shadow: 0 1px 3px rgba(0,0,0,.04) !important; }
+  .mobile-data-table tbody > tr:last-child { margin-bottom: 0 !important; }
+  .mobile-data-table tbody > tr > td { display: flex !important; align-items: flex-start !important; justify-content: space-between !important; gap: 12px !important; width: 100% !important; min-height: 34px !important; padding: 7px 2px !important; border: 0 !important; text-align: right !important; font-size: 13px !important; line-height: 1.35 !important; }
+  .mobile-data-table tbody > tr > td::before { content: attr(data-label); flex: 0 0 34%; max-width: 42%; text-align: left; color: var(--muted-foreground); font-size: 11px; font-weight: 600; line-height: 1.3; }
+  .mobile-data-table tbody > tr > td:first-child { padding-top: 4px !important; }
+  .mobile-data-table tbody > tr > td:last-child { padding-bottom: 4px !important; }
+  .mobile-data-table tbody > tr > td > * { max-width: 66%; }
+  .mobile-data-table tbody > tr > td[data-label=""]::before { display: none; }
+  .mobile-data-table .mobile-table-empty { display: block !important; text-align: center !important; padding: 28px 10px !important; }
+  .mobile-data-table .mobile-table-empty::before { display: none !important; }
+  .mobile-data-table tbody > tr > td.hidden, .mobile-data-table tbody > tr > td[class*="hidden"] { display: flex !important; }
+  .mobile-data-table .mobile-data-table { margin-top: 4px; }
+  .mobile-data-table .mobile-data-table tbody > tr { box-shadow: none !important; background: var(--secondary) !important; }
+  .mobile-data-table .font-mono, .mobile-data-table .font-mono-nums { overflow-wrap: anywhere; word-break: break-word; }
 }
 
-@media (min-width: 768px) {
-  .mobile-data-table {
-    width: 100%;
-  }
-}
+@media (min-width: 768px) { .mobile-data-table { width: 100%; } }
 
 @media (max-width: 767px) {
   .products-table tbody > tr > td:nth-child(1)::before { content: "Product"; }
@@ -348,13 +118,11 @@
   .products-table tbody > tr > td:nth-child(3)::before { content: "Category"; }
   .products-table tbody > tr > td:nth-child(4)::before { content: "Price"; }
   .products-table tbody > tr > td:nth-child(5)::before { content: "Stock"; }
-
   .customers-table tbody > tr > td:nth-child(1)::before { content: "Customer"; }
   .customers-table tbody > tr > td:nth-child(2)::before { content: "Phone"; }
   .customers-table tbody > tr > td:nth-child(3)::before { content: "Address"; }
   .customers-table tbody > tr > td:nth-child(4)::before { content: "Total Purchases"; }
   .customers-table tbody > tr > td:nth-child(5)::before { content: "Outstanding"; }
-
   .staff-table tbody > tr > td:nth-child(1)::before { content: "Staff Member"; }
   .staff-table tbody > tr > td:nth-child(2)::before { content: "Contact"; }
   .staff-table tbody > tr > td:nth-child(3)::before { content: "Role"; }
@@ -363,14 +131,12 @@
   .staff-table tbody > tr > td:nth-child(6)::before { content: "Joined"; }
   .staff-table tbody > tr > td:nth-child(7)::before { content: "Status"; }
   .staff-table tbody > tr > td:nth-child(8)::before { content: "Actions"; }
-
   .movements-table tbody > tr > td:nth-child(1)::before { content: "Product"; }
   .movements-table tbody > tr > td:nth-child(2)::before { content: "Type"; }
   .movements-table tbody > tr > td:nth-child(3)::before { content: "Quantity"; }
   .movements-table tbody > tr > td:nth-child(4)::before { content: "Reason"; }
   .movements-table tbody > tr > td:nth-child(5)::before { content: "Date"; }
   .movements-table tbody > tr > td:nth-child(6)::before { content: "By"; }
-
   .invoices-table tbody > tr > td:nth-child(1)::before { content: "Invoice"; }
   .invoices-table tbody > tr > td:nth-child(2)::before { content: "Customer"; }
   .invoices-table tbody > tr > td:nth-child(3)::before { content: "Items"; }
@@ -380,7 +146,6 @@
   .invoices-table tbody > tr > td:nth-child(7)::before { content: "Status"; }
   .invoices-table tbody > tr > td:nth-child(8)::before { content: "Time"; }
   .invoices-table tbody > tr > td:nth-child(9)::before { content: "Actions"; }
-
   .invoice-items-table tbody > tr > td:nth-child(1)::before { content: "Product"; }
   .invoice-items-table tbody > tr > td:nth-child(2)::before { content: "Qty"; }
   .invoice-items-table tbody > tr > td:nth-child(3)::before { content: "Unit Price"; }
@@ -388,14 +153,8 @@
 }
 
 @media (max-width: 767px) {
-  .purchases-table tbody > tr > td[colspan] {
-    display: block !important;
-    max-width: none !important;
-    text-align: left !important;
-  }
-  .purchases-table tbody > tr > td[colspan]::before {
-    display: none !important;
-  }
+  .purchases-table tbody > tr > td[colspan] { display: block !important; max-width: none !important; text-align: left !important; }
+  .purchases-table tbody > tr > td[colspan]::before { display: none !important; }
   .purchases-table tbody > tr > td:nth-child(1)::before { content: "Expand"; }
   .purchases-table tbody > tr > td:nth-child(2)::before { content: "Purchase ID"; }
   .purchases-table tbody > tr > td:nth-child(3)::before { content: "Supplier"; }
@@ -403,7 +162,6 @@
   .purchases-table tbody > tr > td:nth-child(5)::before { content: "Total"; }
   .purchases-table tbody > tr > td:nth-child(6)::before { content: "Due"; }
   .purchases-table tbody > tr > td:nth-child(7)::before { content: "Actions"; }
-
   .purchase-items-table tbody > tr > td:nth-child(1)::before { content: "Item"; }
   .purchase-items-table tbody > tr > td:nth-child(2)::before { content: "Qty"; }
   .purchase-items-table tbody > tr > td:nth-child(3)::before { content: "Unit Price"; }
@@ -416,4 +174,22 @@
   .billing-items-table tbody > tr > td:nth-child(3)::before { content: "Unit Price"; }
   .billing-items-table tbody > tr > td:nth-child(4)::before { content: "Total"; }
   .billing-items-table tbody > tr > td:nth-child(5)::before { content: "Remove"; }
+}
+
+/* MOBILE FONT SIZE BOOST - UI ONLY. Desktop and application logic unchanged. */
+@media (max-width: 767px) {
+  body { font-size: 17px !important; }
+  .text-xs { font-size: 14px !important; line-height: 1.35 !important; }
+  .text-sm { font-size: 16px !important; line-height: 1.4 !important; }
+  .text-base { font-size: 17px !important; line-height: 1.45 !important; }
+  p, label, li, th, td, input, select, textarea, button { font-size: 17px; line-height: 1.4; }
+  .badge-paid, .badge-partial, .badge-credit, .badge-draft, .payment-cash, .payment-upi, .payment-credit { font-size: 14px !important; line-height: 1.3 !important; }
+  .mobile-data-table tbody > tr > td { font-size: 16px !important; line-height: 1.4 !important; }
+  .mobile-data-table tbody > tr > td::before { font-size: 14px !important; line-height: 1.35 !important; }
+  .input-field, input, select, textarea, button { font-size: 17px !important; }
+  h1 { font-size: 28px !important; line-height: 1.2 !important; }
+  h2 { font-size: 24px !important; line-height: 1.25 !important; }
+  h3 { font-size: 21px !important; line-height: 1.3 !important; }
+  h4 { font-size: 19px !important; line-height: 1.3 !important; }
+  h5, h6 { font-size: 18px !important; line-height: 1.35 !important; }
 }

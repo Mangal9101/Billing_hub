@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { X, Printer } from 'lucide-react';
+import { X, Printer, MessageCircle } from 'lucide-react';
 import type { InvoiceRecord } from './InvoiceBillingScreen';
 import { useAppStore } from '@/lib/store';
 
@@ -18,6 +18,32 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
     window.print();
   };
 
+  const handleWhatsApp = () => {
+    const cleanPhone = (invoice.phone || '').replace(/\D/g, '');
+    const customer = invoice.customer || 'Walk-in Customer';
+    const lines = [
+      `*${data.business.name || 'My Business'}*`,
+      `Invoice: ${invoice.id}`,
+      `Date: ${invoice.date} ${invoice.time || ''}`.trim(),
+      `Customer: ${customer}`,
+      '',
+      ...invoice.items.map(
+        (item, index) =>
+          `${index + 1}. ${item.name} × ${item.qty} = ₹${item.total.toLocaleString('en-IN')}`,
+      ),
+      '',
+      `*Grand Total: ₹${invoice.total.toLocaleString('en-IN')}*`,
+      `Paid: ₹${invoice.paid.toLocaleString('en-IN')}`,
+      `Due: ₹${invoice.due.toLocaleString('en-IN')}`,
+    ];
+
+    const url = cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(lines.join('\n'))}`
+      : `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`;
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="fixed inset-0 bg-foreground/40 z-50 flex items-center justify-center p-4 fade-in">
       <div className="bg-card rounded-xl shadow-modal w-full max-w-lg max-h-[90vh] flex flex-col scale-in">
@@ -26,11 +52,19 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
           <h3 className="font-semibold text-foreground">Print Invoice</h3>
           <div className="flex items-center gap-2">
             <button
+              onClick={handleWhatsApp}
+              className="btn-secondary invoice-whatsapp-btn flex items-center gap-1.5 text-sm py-2"
+              title="Share invoice on WhatsApp"
+            >
+              <MessageCircle size={15} />
+              <span>WhatsApp</span>
+            </button>
+            <button
               onClick={handlePrint}
-              className="btn-primary flex items-center gap-1.5 text-sm py-2"
+              className="btn-primary invoice-print-btn flex items-center gap-1.5 text-sm py-2"
             >
               <Printer size={14} />
-              Print
+              <span>Print</span>
             </button>
             <button
               onClick={onClose}

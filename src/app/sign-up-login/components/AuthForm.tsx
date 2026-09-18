@@ -22,6 +22,8 @@ export default function AuthForm() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
 
   const loginForm = useForm<LoginFormData>({ defaultValues: { email: '', password: '', remember: false } });
   const signupForm = useForm<SignupFormData>();
@@ -151,14 +153,14 @@ export default function AuthForm() {
       toast.info(`Please wait ${otpCooldown}s before requesting another OTP.`);
       return;
     }
-    setIsLoading(true);
+    setOtpSending(true);
     try {
       await sendOtp(email);
       toast.success('8-digit OTP sent to your email address');
     } catch (e: any) {
       toast.error(e?.message || 'Unable to send OTP');
     } finally {
-      setIsLoading(false);
+      setOtpSending(false);
     }
   };
 
@@ -169,7 +171,7 @@ export default function AuthForm() {
       otpForm.setError('otp', { message: 'Enter a valid 8-digit OTP' });
       return;
     }
-    setIsLoading(true);
+    setOtpVerifying(true);
     try {
       const result = await authRequest('verify', { type: 'email', email, token: otp });
       const accessToken = result.access_token;
@@ -182,7 +184,7 @@ export default function AuthForm() {
     } catch (e: any) {
       toast.error(e?.message || 'Invalid or expired OTP');
     } finally {
-      setIsLoading(false);
+      setOtpVerifying(false);
     }
   };
 
@@ -242,7 +244,7 @@ export default function AuthForm() {
           <div className="flex justify-center mb-8 lg:hidden text-foreground"><AppLogo size={40} showBrandName /></div>
 
           {mode === 'otp' ? (
-            <OtpPanel otpForm={otpForm} onVerifyOtp={onVerifyOtp} onSendOtp={onSendOtp} otpSent={otpSent} otpCooldown={otpCooldown} isLoading={isLoading} onBack={() => { setMode('login'); setOtpSent(false); }} />
+            <OtpPanel otpForm={otpForm} onVerifyOtp={onVerifyOtp} onSendOtp={onSendOtp} otpSent={otpSent} otpCooldown={otpCooldown} otpSending={otpSending} otpVerifying={otpVerifying} onBack={() => { setMode('login'); setOtpSent(false); }} />
           ) : (
             <LoginPanel form={loginForm} onSubmit={loginForm.handleSubmit(onLogin)} showPassword={showPassword} setShowPassword={setShowPassword} isLoading={isLoading} googleLoading={googleLoading} onGoogleLogin={handleGoogleLogin} onOtpMode={(email:string) => { otpForm.setValue('email', email); otpForm.setValue('otp', ''); setOtpSent(false); setOtpCooldown(0); setMode('otp'); }} />
           )}
@@ -394,13 +396,13 @@ function SignupPanel({ form, onSubmit, showPassword, setShowPassword, showConfir
   </form>;
 }
 
-function OtpPanel({ otpForm, onVerifyOtp, onSendOtp, otpSent, otpCooldown, isLoading, onBack }: any) {
+function OtpPanel({ otpForm, onVerifyOtp, onSendOtp, otpSent, otpCooldown, otpSending, otpVerifying, onBack }: any) {
   const { register, handleSubmit, formState:{errors} } = otpForm;
   return <form onSubmit={handleSubmit(onVerifyOtp)} className="space-y-5" noValidate>
     <div><button type="button" onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">← Back to Sign In</button><h2 className="text-2xl font-bold text-foreground mb-1">Email OTP Login</h2><p className="text-sm text-muted-foreground">Enter your email to receive an 8-digit one-time password</p></div>
-    <div><label className="block text-sm font-medium text-foreground mb-1.5">Email Address</label><div className="flex gap-2"><div className="relative flex-1"><Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/><input {...register('email',{required:'Email required',pattern:{value:/^\S+@\S+\.\S+$/,message:'Valid email required'}})} type="email" placeholder="owner@example.com" className="input-field pl-9"/></div><button type="button" onClick={onSendOtp} disabled={isLoading||otpCooldown>0} className="btn-primary whitespace-nowrap px-4 text-sm flex items-center gap-1.5">{isLoading?<Loader2 size={14} className="animate-spin"/>:null}{otpCooldown>0?`${otpCooldown}s`:(otpSent?'Resend':'Send OTP')}</button></div>{errors.email&&<p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}</div>
+    <div><label className="block text-sm font-medium text-foreground mb-1.5">Email Address</label><div className="flex gap-2"><div className="relative flex-1"><Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/><input {...register('email',{required:'Email required',pattern:{value:/^\S+@\S+\.\S+$/,message:'Valid email required'}})} type="email" placeholder="owner@example.com" className="input-field pl-9"/></div><button type="button" onClick={onSendOtp} disabled={otpSending||otpVerifying||otpCooldown>0} className="btn-primary whitespace-nowrap px-4 text-sm flex items-center gap-1.5">{otpSending?<Loader2 size={14} className="animate-spin"/>:null}{otpCooldown>0?`${otpCooldown}s`:(otpSent?'Resend':'Send OTP')}</button></div>{errors.email&&<p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}</div>
     {otpSent&&<div className="p-3 bg-green-50 border border-green-200 rounded-lg"><p className="text-sm text-green-700">8-digit OTP sent to your email. Check Inbox/Spam and enter the code below.</p></div>}
     <div><label className="block text-sm font-medium text-foreground mb-1.5">Enter 8-digit OTP</label><input {...register('otp',{required:'OTP is required',validate:(v:string)=>/^\d{8}$/.test(v)||'8-digit OTP required'})} type="text" inputMode="numeric" placeholder="12345678" maxLength={8} className="input-field tracking-widest text-center text-lg font-mono" onInput={(e)=>{e.currentTarget.value=e.currentTarget.value.replace(/\D/g,'').slice(0,8);}}/>{errors.otp&&<p className="mt-1 text-xs text-red-600">{errors.otp.message}</p>}</div>
-    <button type="submit" disabled={isLoading||!otpSent} className="btn-primary w-full flex items-center justify-center gap-2 py-2.5">{isLoading?<><Loader2 size={16} className="animate-spin"/>Verifying...</>:<>Verify & Sign In<ArrowRight size={16}/></>}</button>
+    <button type="submit" disabled={otpVerifying||otpSending||!otpSent} className="btn-primary w-full flex items-center justify-center gap-2 py-2.5">{otpVerifying?<><Loader2 size={16} className="animate-spin"/>Verifying...</>:<>Verify & Sign In<ArrowRight size={16}/></>}</button>
   </form>;
 }

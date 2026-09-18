@@ -184,8 +184,7 @@ export async function POST(req: NextRequest) {
       // These checks do not depend on one another. Run them concurrently so
       // Google callback completion is limited by the slowest Supabase request,
       // rather than the sum of several network round trips.
-      const [storedName, device, businessRows] = await Promise.all([
-        storedOwnerName(companyId),
+      const [device, businessRows] = await Promise.all([
         trustedDevice(uid, deviceId),
         role === 'owner'
           ? supabaseAdmin(
@@ -196,7 +195,7 @@ export async function POST(req: NextRequest) {
             })
           : Promise.resolve([]),
       ]);
-      const resolvedName = bestOwnerName(user, storedName);
+      const resolvedName = bestOwnerName(user);
 
       // Repair the old shared-owner edge case: an owner membership is valid only
       // when the business itself is owned by the same Supabase Auth user.
@@ -249,20 +248,22 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // A new owner gets a private business derived from their own Supabase UID.
-    const business = await ensureOwnerBusiness(user);
-
+    // New owner: keep the Google -> OTP transition fast. Business creation is
+    // only needed after the OTP has actually been verified.
+    const businessId = getOwnerBusinessId(uid);
+    const ownerNameValue = ownerName(user);
     if (!otpVerified) {
       return NextResponse.json({
         needsEmailOtp: true,
         firstLogin: true,
         uid,
-        email: business.email,
-        name: business.name,
-        companyId: business.businessId,
+        email,
+        name: ownerNameValue,
+        companyId: businessId,
       });
     }
 
+    const business = await ensureOwnerBusiness(user);
     const device = await trustedDevice(uid, deviceId);
     if (!device.trusted) await trustDevice(uid, device.deviceHash);
 

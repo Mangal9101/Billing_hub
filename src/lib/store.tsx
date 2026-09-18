@@ -109,9 +109,15 @@ function repairData(input:any, identity?:{businessId?:string; ownerName?:string;
     const name=(inv.customer||'').trim();
     if(!name || name.toLowerCase()==='walk-in customer') return {...inv,customerId:undefined};
 
+    // Preserve an existing invoice-to-customer relationship even when the
+    // customer's master phone/name was later changed. Older code discarded a
+    // valid customerId when its current details no longer matched the invoice's
+    // historical details, which caused duplicate customers and stale numbers.
     const linked=inv.customerId ? customers.find(c=>c.id===inv.customerId) : undefined;
+    const ledgerLink=d.ledger.find((entry:any)=>entry.invoiceId===inv.id)?.customerId;
+    const ledgerCustomer=ledgerLink ? customers.find(c=>c.id===ledgerLink) : undefined;
     const exact=findCustomer(name,inv.phone||'');
-    let c=exact || (linked && identityKey(linked.name,linked.phone)===identityKey(name,inv.phone||'') ? linked : undefined);
+    let c=linked || ledgerCustomer || exact;
 
     if(!c){
       c={

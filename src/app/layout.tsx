@@ -6,7 +6,7 @@ import { Toaster } from 'sonner';
 import { AppStoreProvider } from '@/lib/store';
 import AuthGate from '@/components/AuthGate';
 import SWRegister from './sw-register';
-import { startLocalLanguageObserver } from '@/lib/language';
+import LocalLanguageRuntime from '@/components/LocalLanguageRuntime';
 
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-dm-sans', display: 'swap' });
 const ibmPlexMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-ibm-plex-mono', display: 'swap' });
@@ -25,6 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className={`${dmSans.variable} ${ibmPlexMono.variable}`}>
       <body className={dmSans.className}>
         <AppStoreProvider><AuthGate>{children}</AuthGate></AppStoreProvider>
+        <LocalLanguageRuntime />
         <SWRegister />
         <Toaster position="bottom-right" richColors closeButton />
       </body>

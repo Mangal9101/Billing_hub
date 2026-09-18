@@ -291,6 +291,50 @@ const translations: Record<string, string> = {
   'Stock cannot be negative': 'भंडार ऋणात्मक नहीं हो सकता',
 };
 
+
+/* Additional UI phrases collected from the live Billing Hub screens. */
+Object.assign(translations, {
+  'Notifications':'सूचनाएँ','Open menu':'मेन्यू खोलें','Business logo':'व्यवसाय का लोगो','Current business':'वर्तमान व्यवसाय',
+  'Switch business':'व्यवसाय बदलें','Recent update':'हाल का संशोधन','Collapse sidebar':'साइडबार बंद करें','Close menu':'मेन्यू बंद करें',
+  'Dashboard view':'डैशबोर्ड देखें','Billing view':'बिलिंग देखें','Create billing':'बिलिंग बनाएँ','Edit invoices':'चालान संपादित करें',
+  'View products':'उत्पाद देखें','Add customers':'ग्राहक जोड़ें','Edit customers':'ग्राहक संपादित करें','Delete customers':'ग्राहक हटाएँ',
+  'View purchases':'खरीदारी देखें','Add purchases':'खरीदारी जोड़ें','Edit purchases':'खरीदारी संपादित करें','Delete purchases':'खरीदारी हटाएँ',
+  'View stock':'भंडार देखें','Stock adjustment':'भंडार समायोजन','View Khatabook':'खाताबही देखें','Khatabook changes':'खाताबही में बदलाव',
+  'Contact':'संपर्क','Role':'भूमिका','Login ID':'लॉगिन आईडी','Salary':'वेतन','Joined':'शामिल हुए','Status':'स्थिति',
+  'Cleared':'निपट गया','Adjustments':'समायोजन','OUT':'निकासी','IN':'आवक','ALL':'सभी','ADJUSTMENT':'समायोजन',
+  'New Purchase':'नई खरीद','Supplier name':'आपूर्तिकर्ता का नाम','Phone number':'फ़ोन नंबर','Item name':'वस्तु का नाम',
+  'Optional notes':'वैकल्पिक टिप्पणियाँ','Export purchase list as PDF':'खरीदारी सूची को PDF के रूप में निर्यात करें',
+  'Search purchases...':'खरीदारी खोजें...','Search product...':'उत्पाद खोजें...','Search by name or phone...':'नाम या फ़ोन से खोजें...',
+  'Back to list':'सूची पर वापस जाएँ','Back to Khatabook':'खाताबही पर वापस जाएँ','Share invoice on WhatsApp':'चालान व्हाट्सऐप पर साझा करें',
+  'Enter a valid payment amount':'भुगतान की सही राशि दर्ज करें','This invoice is not linked to a customer account':'यह चालान किसी ग्राहक खाते से जुड़ा नहीं है',
+  'Account Balance':'खाता शेष','Account Cleared':'खाता निपट गया','Payment lena hai aaj':'आज भुगतान लेना है',
+  'Payment dene ka bola hai':'आज भुगतान देना है','Delete reminder':'रिमाइंडर हटाएँ','Full name':'पूरा नाम',
+  '10-digit phone':'10 अंकों का फ़ोन','10-digit mobile number':'10 अंकों का मोबाइल नंबर','Customer name required':'ग्राहक का नाम आवश्यक है',
+  'Phone required':'फ़ोन आवश्यक है','Amount must be greater than 0':'राशि 0 से अधिक होनी चाहिए','Description required':'विवरण आवश्यक है',
+  'Business ID required':'व्यवसाय आईडी आवश्यक है','Name required':'नाम आवश्यक है','Enter valid 10-digit phone':'10 अंकों का सही फ़ोन दर्ज करें',
+  'Login ID required':'लॉगिन आईडी आवश्यक है','Password must be at least 6 characters':'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए',
+  'Salary cannot be negative':'वेतन ऋणात्मक नहीं हो सकता','Staff account created':'कर्मचारी खाता बना दिया गया','Staff removed':'कर्मचारी हटा दिया गया',
+  'New device detected. Verify your email with the 8-digit OTP.':'नया उपकरण मिला। अपने ईमेल से 8 अंकों के ओटीपी द्वारा सत्यापित करें।',
+  'Signed in successfully!':'सफलतापूर्वक लॉगिन हो गया!','Staff login successful':'कर्मचारी लॉगिन सफल रहा',
+  'Enter your email address':'अपना ईमेल पता दर्ज करें','Passwords do not match':'पासवर्ड मेल नहीं खाते',
+  '8-digit verification OTP sent to your email':'8 अंकों का सत्यापन ओटीपी आपके ईमेल पर भेजा गया',
+  '8-digit OTP sent to your email address':'8 अंकों का ओटीपी आपके ईमेल पते पर भेजा गया','Enter a valid 8-digit OTP':'8 अंकों का सही ओटीपी दर्ज करें',
+  'OTP verification did not return a secure session':'ओटीपी सत्यापन से सुरक्षित सत्र नहीं मिला','Supabase Google login is not configured':'Supabase Google लॉगिन कॉन्फ़िगर नहीं है',
+  'Create & print invoices in seconds':'कुछ ही सेकंड में चालान बनाएँ और प्रिंट करें','Real-time stock level monitoring':'भंडार स्तर की रियल-टाइम निगरानी',
+  'Khatabook — credit ledger tracking':'खाताबही — उधार खाते का रिकॉर्ड','Daily sales analytics & reports':'दैनिक बिक्री विश्लेषण और रिपोर्ट',
+  'Staff Login':'कर्मचारी लॉगिन','Login ID is required':'लॉगिन आईडी आवश्यक है','Password is required':'पासवर्ड आवश्यक है',
+  'Minimum 6 characters':'कम से कम 6 अक्षर','Enter your password':'अपना पासवर्ड दर्ज करें','Show password':'पासवर्ड दिखाएँ',
+  'Name is required':'नाम आवश्यक है','Phone required':'फ़ोन आवश्यक है','Invalid Indian mobile number':'अमान्य भारतीय मोबाइल नंबर',
+  'Email is required':'ईमेल आवश्यक है','Enter a valid email':'सही ईमेल दर्ज करें','Password required':'पासवर्ड आवश्यक है',
+  'Minimum 8 characters':'कम से कम 8 अक्षर','Min. 8 characters':'कम से कम 8 अक्षर','Please confirm password':'कृपया पासवर्ड की पुष्टि करें',
+  'Repeat password':'पासवर्ड दोबारा दर्ज करें','Email required':'ईमेल आवश्यक है','Valid email required':'सही ईमेल आवश्यक है','Send OTP':'ओटीपी भेजें',
+  'OTP is required':'ओटीपी आवश्यक है','Could not enable browser notifications.':'ब्राउज़र सूचनाएँ सक्षम नहीं की जा सकीं।',
+  'Notifications enabled.':'सूचनाएँ सक्षम हैं।','Notification permission was not allowed.':'सूचना की अनुमति नहीं दी गई।',
+  'Browser notifications are not supported in this browser.':'इस ब्राउज़र में ब्राउज़र सूचनाएँ समर्थित नहीं हैं।',
+  'Please allow pop-ups for this site to export the PDF.':'PDF निर्यात करने के लिए इस साइट के पॉप-अप की अनुमति दें।',
+  'ArrowLeftIcon':'पीछे','HomeIcon':'होम','Page not found':'पृष्ठ नहीं मिला','Go back':'वापस जाएँ','Go home':'होम पर जाएँ'
+});
+
 /*
  * Word-level fallback covers UI phrases that are composed dynamically in JSX.
  * It is deliberately local and deterministic. Brand names, IDs, numbers and

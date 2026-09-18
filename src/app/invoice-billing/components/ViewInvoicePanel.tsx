@@ -51,7 +51,7 @@ export default function ViewInvoicePanel({ invoice, onBack, onCreateNew }: Props
       : undefined) ||
     data.customers
       .filter((c) => c.name.trim().toLowerCase() === (storedInvoice.customer || '').trim().toLowerCase())
-      .sort((a, b) => b.lastVisit.localeCompare(a.lastVisit))[0];
+      [0];
   const liveInvoice = (invoiceCustomer
     ? { ...storedInvoice, customer: invoiceCustomer.name, phone: invoiceCustomer.phone || '', address: invoiceCustomer.address || '' }
     : storedInvoice) as InvoiceRecord;

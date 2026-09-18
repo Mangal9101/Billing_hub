@@ -4,7 +4,12 @@ import { useEffect, useState } from 'react';
 import { Languages, Check } from 'lucide-react';
 import { getLanguage, setLanguage, applyGoogleLanguage, type AppLanguage } from '@/lib/language';
 
-export default function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  collapsed?: boolean;
+  mobile?: boolean;
+}
+
+export default function LanguageSwitcher({ collapsed = false, mobile = false }: LanguageSwitcherProps) {
   const [open, setOpen] = useState(false);
   const [language, setCurrentLanguage] = useState<AppLanguage>('en');
 
@@ -40,20 +45,20 @@ export default function LanguageSwitcher() {
   };
 
   return (
-    <div className="fixed left-2 bottom-2 z-[90] lg:left-3">
+    <div className={mobile ? 'mt-1' : 'w-full'}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2 text-xs font-medium text-muted-foreground shadow-lg hover:bg-secondary hover:text-foreground"
+        className={`flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground w-full transition-colors ${collapsed ? 'justify-center' : ''}`}
         aria-label="Language"
         title="Language"
       >
         <Languages size={16} />
-        <span>{language === 'hi' ? 'हिन्दी' : 'English'}</span>
+        {!collapsed && <span className="flex-1 text-left">{language === 'hi' ? 'हिन्दी' : 'English'}</span>}
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-0 mb-2 w-36 rounded-xl border border-border bg-card p-1.5 shadow-xl">
+        <div className="absolute bottom-full left-0 mb-2 w-36 rounded-xl border border-border bg-card p-1.5 shadow-xl z-[80]">
           <p className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
             Language
           </p>

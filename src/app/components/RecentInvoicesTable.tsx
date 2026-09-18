@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Eye, Printer } from 'lucide-react';
+import { } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -23,7 +23,6 @@ export default function RecentInvoicesTable() {
   const {data,ready}=useAppStore();
   const router = useRouter();
   const recentInvoices=data.invoices.slice(0,8).map((i:any)=>({...i,items:i.items.map((x:any)=>`${x.name} ×${x.qty}`).join(', ')}));
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   if(!ready)return null;
 
   return (
@@ -62,7 +61,9 @@ export default function RecentInvoicesTable() {
                 key={inv.id}
                 onMouseEnter={() => setHoveredRow(inv.id)}
                 onMouseLeave={() => setHoveredRow(null)}
-                className="border-b border-border last:border-0 transition-colors hover:bg-secondary/40"
+                onClick={() => router.push(`/invoice-billing?invoice=${encodeURIComponent(inv.id)}`)}
+                className="border-b border-border last:border-0 transition-colors hover:bg-secondary/40 cursor-pointer"
+                title="Click to view invoice"
               >
                 <td className="px-5 py-3">
                   <span className="font-mono text-xs text-primary font-medium">{inv.id}</span>
@@ -99,16 +100,7 @@ export default function RecentInvoicesTable() {
                 <td className="px-3 py-3 text-right hidden sm:table-cell">
                   <span className="text-xs text-muted-foreground font-mono">{inv.time}</span>
                 </td>
-                <td className="px-3 py-3">
-                  <div className={`flex items-center gap-1 justify-end transition-opacity duration-150 ${hoveredRow === inv.id ? 'opacity-100' : 'opacity-0'}`}>
-                    <button onClick={() => router.push(`/invoice-billing?invoice=${encodeURIComponent(inv.id)}`)} className="p-1.5 rounded hover:bg-secondary transition-colors group relative" title="View invoice">
-                      <Eye size={14} className="text-muted-foreground group-hover:text-foreground" />
-                    </button>
-                    <button onClick={() => router.push(`/invoice-billing?invoice=${encodeURIComponent(inv.id)}&action=print`)} className="p-1.5 rounded hover:bg-secondary transition-colors group relative" title="Print invoice">
-                      <Printer size={14} className="text-muted-foreground group-hover:text-foreground" />
-                    </button>
-                  </div>
-                </td>
+
               </tr>
             ))}
           </tbody>

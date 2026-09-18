@@ -223,7 +223,7 @@ export default function AuthForm() {
             <AppLogo size={56} showBrandName />
           </div>
           <h1 className="text-3xl xl:text-4xl font-bold text-primary-foreground leading-tight mb-4">Billing & Stock<br />Management</h1>
-          <p className="text-primary-foreground/80 text-base leading-relaxed max-w-xs">Manage your business with ease — create invoices, track stock, and monitor your khata all in one place.</p>
+          <p className="text-primary-foreground/80 text-base leading-relaxed max-w-xs">Business billing, inventory, customer accounts, and reports.</p>
         </div>
 
         <div className="relative z-10 space-y-3">
@@ -234,7 +234,7 @@ export default function AuthForm() {
             { icon: '📊', text: 'Daily sales analytics & reports' },
           ].map((f) => <div key={`feature-${f.text.slice(0,15)}`} className="flex items-center gap-3"><span className="text-lg">{f.icon}</span><span className="text-primary-foreground/80 text-sm">{f.text}</span></div>)}
         </div>
-        <div className="relative z-10"><p className="text-primary-foreground/50 text-xs">IST timezone · INR currency · Designed for Indian retail</p></div>
+        <div className="relative z-10"><p className="text-primary-foreground/50 text-xs">India-ready billing and inventory management</p></div>
       </div>
 
       <div className="flex-1 flex flex-col justify-center px-6 sm:px-10 lg:px-14 xl:px-20 py-10 bg-background overflow-y-auto">

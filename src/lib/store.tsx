@@ -621,12 +621,50 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
   };
 
   const updateCustomer=(id:string,p:Partial<Customer>)=>
-    setData(d=>({
-      ...d,
-      customers:d.customers.map(x=>
-        x.id===id?{...x,...p}:x
-      )
-    }));
+    setData(d=>{
+      const existingCustomer=d.customers.find(x=>x.id===id);
+      if(!existingCustomer) return d;
+
+      const nextCustomer={
+        ...existingCustomer,
+        ...p,
+        name:(p.name ?? existingCustomer.name).trim(),
+        phone:normalizePhone(p.phone ?? existingCustomer.phone),
+        address:p.address ?? existingCustomer.address
+      };
+
+      // Important: older invoices may have been saved without customerId.
+      // When the customer master is edited, permanently link those invoices
+      // to this customer and refresh their displayed name/phone/address.
+      const oldName=existingCustomer.name.trim().toLowerCase();
+      const oldPhone=normalizePhone(existingCustomer.phone||'');
+
+      const invoices=d.invoices.map(inv=>{
+        const invoiceName=(inv.customer||'').trim().toLowerCase();
+        const invoicePhone=normalizePhone(inv.phone||'');
+
+        const linkedById=inv.customerId===id;
+        const linkedByOldDetails=
+          invoiceName===oldName &&
+          (!!oldPhone ? invoicePhone===oldPhone : true);
+
+        if(!linkedById&&!linkedByOldDetails) return inv;
+
+        return {
+          ...inv,
+          customerId:id,
+          customer:nextCustomer.name,
+          phone:nextCustomer.phone||'',
+          address:nextCustomer.address||''
+        };
+      });
+
+      return {
+        ...d,
+        customers:d.customers.map(x=>x.id===id?nextCustomer:x),
+        invoices
+      };
+    });
 
   const deleteCustomer=(id:string)=>
     setData(d=>({

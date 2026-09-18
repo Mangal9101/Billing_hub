@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Languages } from 'lucide-react';
-import { getLanguage, setLanguage, applyGoogleLanguage, type AppLanguage } from '@/lib/language';
+import { getLanguage, setLanguage, type AppLanguage } from '@/lib/language';
 
 interface LanguageSwitcherProps {
   collapsed?: boolean;
@@ -28,15 +28,6 @@ export default function LanguageSwitcher({ collapsed = false, mobile = false }: 
   const choose = (next: AppLanguage) => {
     setCurrentLanguage(next);
     setLanguage(next);
-
-    let attempts = 0;
-    const timer = window.setInterval(() => {
-      attempts += 1;
-      applyGoogleLanguage(next);
-      if (document.querySelector('.goog-te-combo') || attempts >= 20) {
-        window.clearInterval(timer);
-      }
-    }, 150);
   };
 
   if (collapsed && !mobile) {

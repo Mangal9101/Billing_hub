@@ -6,7 +6,9 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone"],
+  "display_override": [
+    "standalone"
+  ],
   "background_color": "#fafaf9",
   "theme_color": "#92400e",
   "orientation": "portrait-primary",
@@ -14,12 +16,6 @@
   "icons": [
     {
       "src": "/assets/images/app_logo.png",
-      "sizes": "any",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/images/billing_hub_brand.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any"

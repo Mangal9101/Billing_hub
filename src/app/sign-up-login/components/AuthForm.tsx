@@ -244,16 +244,7 @@ export default function AuthForm() {
           {mode === 'otp' ? (
             <OtpPanel otpForm={otpForm} onVerifyOtp={onVerifyOtp} onSendOtp={onSendOtp} otpSent={otpSent} otpCooldown={otpCooldown} isLoading={isLoading} onBack={() => { setMode('login'); setOtpSent(false); }} />
           ) : (
-            <>
-              <div className="flex bg-secondary rounded-xl p-1 mb-8">
-                {(['login', 'signup'] as AuthMode[]).map((m) => <button key={`tab-${m}`} onClick={() => setMode(m)} className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${mode === m ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{m === 'login' ? 'Sign In' : 'Create Account'}</button>)}
-              </div>
-              {mode === 'login' ? (
-                <LoginPanel form={loginForm} onSubmit={loginForm.handleSubmit(onLogin)} showPassword={showPassword} setShowPassword={setShowPassword} isLoading={isLoading} googleLoading={googleLoading} onGoogleLogin={handleGoogleLogin} onOtpMode={(email:string) => { otpForm.setValue('email', email); otpForm.setValue('otp', ''); setOtpSent(false); setOtpCooldown(0); setMode('otp'); }} />
-              ) : (
-                <SignupPanel form={signupForm} onSubmit={signupForm.handleSubmit(onSignup)} showPassword={showPassword} setShowPassword={setShowPassword} showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} isLoading={isLoading} googleLoading={googleLoading} onGoogleLogin={handleGoogleLogin} />
-              )}
-            </>
+            <LoginPanel form={loginForm} onSubmit={loginForm.handleSubmit(onLogin)} showPassword={showPassword} setShowPassword={setShowPassword} isLoading={isLoading} googleLoading={googleLoading} onGoogleLogin={handleGoogleLogin} onOtpMode={(email:string) => { otpForm.setValue('email', email); otpForm.setValue('otp', ''); setOtpSent(false); setOtpCooldown(0); setMode('otp'); }} />
           )}
         </div>
       </div>

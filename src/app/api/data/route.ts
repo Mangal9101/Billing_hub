@@ -219,6 +219,7 @@ export async function POST(req: NextRequest) {
       `business_data?business_id=eq.${encodeURIComponent(businessId)}`,
       {
         method: 'PATCH',
+        headers: { Prefer: 'return=representation' },
         body: JSON.stringify({
           payload: incoming,
           updated_at: now,

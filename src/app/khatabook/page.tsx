@@ -498,7 +498,7 @@ export default function KhatabookPage() {
                       </h1>
 
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        Complete khata details
+                        Complete account details
                       </p>
                     </div>
                   </div>
@@ -649,7 +649,7 @@ export default function KhatabookPage() {
                           </p>
 
                           <p className="text-xs text-muted-foreground mt-1">
-                            Customer ne jis date payment dene ka bola hai
+                            Customer's promised payment date
                           </p>
                         </div>
 
@@ -861,7 +861,7 @@ export default function KhatabookPage() {
                   className="btn-primary flex items-center gap-2"
                 >
                   <Plus size={16} />
-                  New Khata
+                  New Account
                 </button>
               </div>
 
@@ -965,7 +965,7 @@ export default function KhatabookPage() {
                   <div className="px-5 py-4 border-b border-red-100 bg-red-50/60 flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-red-700">
-                        🔔 Payment lena hai aaj
+                        Payment due today
                       </p>
 
                       <p className="text-xs text-red-600/80 mt-0.5">
@@ -1078,7 +1078,7 @@ export default function KhatabookPage() {
                 <div className="card p-4">
                   <p className="text-xs text-muted-foreground mb-1">Total Outstanding</p>
                   <p className="text-2xl font-bold text-red-600">₹{totalOutstanding.toLocaleString('en-IN')}</p>
-                  <p className="text-xs text-red-600/80 mt-1">Customer se lena hai</p>
+                  <p className="text-xs text-red-600/80 mt-1">Amount receivable</p>
                 </div>
 
                 <div className="card p-4 border-green-200 bg-green-50/30">
@@ -1534,13 +1534,13 @@ export default function KhatabookPage() {
           </div>
         )}
 
-        {/* Add New Khata Modal */}
+        {/* Add New Account Modal */}
         {showAddModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 fade-in p-4">
             <div className="bg-card rounded-xl shadow-xl w-full max-w-md mx-4 scale-in">
               <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                 <h2 className="text-lg font-semibold text-foreground">
-                  New Khata Entry
+                  New Account Entry
                 </h2>
 
                 <button
@@ -1687,7 +1687,7 @@ export default function KhatabookPage() {
                   onClick={handleAddAccount}
                   className="btn-primary"
                 >
-                  Create Khata
+                  Create Account
                 </button>
               </div>
             </div>

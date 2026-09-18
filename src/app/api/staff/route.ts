@@ -27,12 +27,17 @@ export async function GET(req: NextRequest) {
     const r = await supabaseAdmin(`staff_profiles?business_id=eq.${encodeURIComponent(membership.business_id)}&select=id,user_id,name,phone,email,role,salary,join_date,status,login_id,permissions,created_at&order=created_at.asc`);
     if (!r.ok) return NextResponse.json({ error: await r.text() }, { status: 500 });
     const staff = await r.json();
-    return NextResponse.json({ staff: Array.isArray(staff) ? staff.map((s:any) => ({
-      ...s,
-      loginId: String(s.login_id || ''),
-      joinDate: String(s.join_date || ''),
-      permissions: sanitizeStaffPermissions(String(s.role || 'cashier').toLowerCase() as any, s.permissions),
-    })) : [] });
+    return NextResponse.json({ staff: Array.isArray(staff) ? staff.map((s: any) => {
+      const rawRole = String(s.role || 'cashier').toLowerCase();
+      const role = rawRole === 'manager' ? 'Manager' : rawRole === 'helper' ? 'Helper' : 'Cashier';
+      return {
+        ...s,
+        role,
+        loginId: String(s.login_id || ''),
+        joinDate: String(s.join_date || ''),
+        permissions: sanitizeStaffPermissions(rawRole as any, s.permissions),
+      };
+    }) : [] });
   } catch (e: any) { return NextResponse.json({ error: e?.message || 'Unable to load staff.' }, { status: e?.message === 'Unauthorized' ? 401 : 403 }); }
 }
 

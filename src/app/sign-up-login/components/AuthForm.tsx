@@ -219,12 +219,10 @@ export default function AuthForm() {
         </div>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-12">
-            <AppLogo size={44} />
-            <div>
-              <p className="text-primary-foreground font-bold text-xl leading-tight">Billing Hub</p>
-              <p className="text-primary-foreground/70 text-sm font-medium">BILL. MANAGE. GROW.</p>
-            </div>
+          <div className="flex flex-col items-center mb-12 text-center">
+            <AppLogo size={56} />
+            <p className="text-primary-foreground font-bold text-xl leading-tight mt-2">Billing Hub</p>
+            <p className="text-primary-foreground/70 text-sm font-medium mt-0.5">BILL. MANAGE. GROW.</p>
           </div>
           <h1 className="text-3xl xl:text-4xl font-bold text-primary-foreground leading-tight mb-4">Billing & Stock<br />Management</h1>
           <p className="text-primary-foreground/80 text-base leading-relaxed max-w-xs">Manage your business with ease — create invoices, track stock, and monitor your khata all in one place.</p>
@@ -243,7 +241,7 @@ export default function AuthForm() {
 
       <div className="flex-1 flex flex-col justify-center px-6 sm:px-10 lg:px-14 xl:px-20 py-10 bg-background overflow-y-auto">
         <div className="w-full max-w-md mx-auto">
-          <div className="flex items-center gap-2 mb-8 lg:hidden"><AppLogo size={32} /><span className="font-bold text-foreground">Billing Hub</span></div>
+          <div className="flex flex-col items-center gap-0.5 mb-8 lg:hidden"><AppLogo size={40} /><span className="font-bold text-foreground">Billing Hub</span></div>
 
           {mode === 'otp' ? (
             <OtpPanel otpForm={otpForm} onVerifyOtp={onVerifyOtp} onSendOtp={onSendOtp} otpSent={otpSent} otpCooldown={otpCooldown} isLoading={isLoading} onBack={() => { setMode('login'); setOtpSent(false); }} />

@@ -967,51 +967,71 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
 
   const addPurchase=(p:Omit<Purchase,'id'|'date'>)=>
     setData(d=>{
-      const id=
-        'PUR-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
-
-      const purchase:Purchase={
-        ...p,
-        id,
-        date:today()
-      };
-
-      let products=d.products;
+      const id='PUR-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
+      const purchase:Purchase={...p,id,date:today()};
+      let products=[...d.products];
       const movements=[...d.movements];
 
       for(const item of p.items){
-        if(item.productId){
+        const normalizedName=(item.name||'').trim();
+        if(!normalizedName||item.qty<=0) continue;
+
+        const product=products.find(x=>
+          x.name.trim().toLowerCase()===normalizedName.toLowerCase()
+        );
+
+        if(product){
+          const nextPrice=Number(item.unitPrice)>0
+            ? Number(item.unitPrice)
+            : product.price;
           products=products.map(x=>
-            x.id===item.productId
-              ? {...x,stock:x.stock+item.qty}
+            x.id===product.id
+              ? {...x,price:nextPrice,stock:x.stock+Number(item.qty)}
               : x
           );
-
           movements.push({
             id:'m-'+crypto.randomUUID(),
-            productId:item.productId,
-            productName:item.name,
+            productId:product.id,
+            productName:normalizedName,
             type:'IN',
-            qty:item.qty,
+            qty:Number(item.qty),
             reason:'Purchase '+id,
             date:today(),
+            unit:product.unit,
+            refId:id
+          });
+        }else{
+          const newProduct:Product={
+            id:'p-'+crypto.randomUUID(),
+            name:normalizedName,
+            sku:'PUR-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,5).toUpperCase(),
+            category:'',
+            price:Number(item.unitPrice)||0,
+            stock:Number(item.qty),
+            unit:'piece',
+            lowStockAlert:5
+          };
+          products.push(newProduct);
+          movements.push({
+            id:'m-'+crypto.randomUUID(),
+            productId:newProduct.id,
+            productName:newProduct.name,
+            type:'IN',
+            qty:Number(item.qty),
+            reason:'Purchase '+id+' · New Product',
+            date:today(),
+            unit:newProduct.unit,
             refId:id
           });
         }
       }
 
       return pushActivity(
-        {
-          ...d,
-          purchases:[purchase,...d.purchases],
-          products,
-          movements
-        },
+        {...d,purchases:[purchase,...d.purchases],products,movements},
         'products',
-        `Purchase recorded: ${id}`
+        'Purchase recorded: '+id
       );
     });
-
   const updatePurchase=(id:string,p:Partial<Purchase>)=>
     setData(d=>({
       ...d,

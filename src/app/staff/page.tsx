@@ -29,12 +29,35 @@ export default function StaffPage(){
  const save=async()=>{if(!validate())return;const s=getSession();try{const payload={...form,businessId:s?.companyId||'',role:form.role.toLowerCase(),joinDate:new Date().toLocaleDateString('en-GB'),join_date:new Date().toLocaleDateString('en-GB')};const r=await fetch('/api/staff'+(editing?`?id=${encodeURIComponent(editing.id)}`:''),{method:editing?'PATCH':'POST',headers:{Authorization:`Bearer ${s?.accessToken||''}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});const j=await r.json();if(!r.ok)throw new Error(j.error);setShowModal(false);if(!editing)setGenerated({name:form.name,loginId:form.loginId,password:form.password,role:form.role});toast.success(editing?'Staff updated':'Staff account created');await load();}catch(e:any){toast.error(e.message||'Unable to save staff');}};
  const remove=async(id:string)=>{const s=getSession();try{const r=await fetch(`/api/staff?id=${encodeURIComponent(id)}&businessId=${encodeURIComponent(s?.companyId||'')}`,{method:'DELETE',headers:{Authorization:`Bearer ${s?.accessToken||''}`}});const j=await r.json();if(!r.ok)throw new Error(j.error);setDeleteConfirm(null);toast.success('Staff removed');await load();}catch(e:any){toast.error(e.message||'Unable to remove staff');}};
  const toggle=(p:Permission)=>setForm(f=>({...f,permissions:f.permissions.includes(p)?f.permissions.filter(x=>x!==p):[...f.permissions,p]}));
- if(loading)return <AppLayout activePath="/staff"><div className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-2xl mx-auto space-y-6">
-  <div className="flex items-center justify-between"><div><div className="h-7 w-52 rounded bg-secondary/70 animate-pulse"/><div className="h-4 w-72 rounded bg-secondary/60 animate-pulse mt-2"/></div><div className="h-9 w-28 rounded-lg bg-secondary/70 animate-pulse"/></div>
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">{[1,2,3,4].map(i=><div key={i} className="card p-4"><div className="h-3 w-20 rounded bg-secondary/70 animate-pulse"/><div className="h-7 w-10 rounded bg-secondary/70 animate-pulse mt-2"/></div>)}</div>
-  <div className="h-10 w-full max-w-sm rounded-lg bg-secondary/60 animate-pulse"/>
-  <div className="card overflow-hidden"><div className="space-y-0">{[1,2,3,4,5].map(i=><div key={i} className="h-16 border-b border-border bg-secondary/20 animate-pulse"/></div></div>
- </div></AppLayout>;
+ if(loading)return (
+  <AppLayout activePath="/staff">
+    <div className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-2xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="h-7 w-52 rounded bg-secondary/70 animate-pulse" />
+          <div className="h-4 w-72 rounded bg-secondary/60 animate-pulse mt-2" />
+        </div>
+        <div className="h-9 w-28 rounded-lg bg-secondary/70 animate-pulse" />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[1,2,3,4].map(i => (
+          <div key={i} className="card p-4">
+            <div className="h-3 w-20 rounded bg-secondary/70 animate-pulse" />
+            <div className="h-7 w-10 rounded bg-secondary/70 animate-pulse mt-2" />
+          </div>
+        ))}
+      </div>
+      <div className="h-10 w-full max-w-sm rounded-lg bg-secondary/60 animate-pulse" />
+      <div className="card overflow-hidden">
+        <div className="space-y-0">
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="h-16 border-b border-border bg-secondary/20 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    </div>
+  </AppLayout>
+);
  const session=getSession(); if(!session?.isOwner)return <AppLayout activePath="/staff"><div className="p-8"><div className="card p-6 max-w-lg"><h2 className="text-lg font-semibold">Owner permission required</h2><p className="text-sm text-muted-foreground mt-1">Only the business owner can manage staff accounts and permissions.</p></div></div></AppLayout>;
  const active=staff.filter(s=>s.status==='Active').length,total=staff.filter(s=>s.status==='Active').reduce((a,s)=>a+s.salary,0);
  return <AppLayout activePath="/staff"><div className="px-6 lg:px-8 xl:px-10 py-6 max-w-screen-2xl mx-auto space-y-6">

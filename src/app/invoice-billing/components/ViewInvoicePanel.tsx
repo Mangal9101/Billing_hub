@@ -43,9 +43,15 @@ export default function ViewInvoicePanel({ invoice, onBack, onCreateNew }: Props
   const [paymentAmount, setPaymentAmount] = useState('');
   const { data, receivePayment } = useAppStore();
   const storedInvoice = data.invoices.find(i => i.id === invoice.id) || invoice;
-  const invoiceCustomer = storedInvoice.customerId
-    ? data.customers.find((c) => c.id === storedInvoice.customerId)
-    : undefined;
+  // Older invoices may not have customerId. Fall back to the customer name
+  // so the current customer master phone/address are shown in billing too.
+  const invoiceCustomer =
+    (storedInvoice.customerId
+      ? data.customers.find((c) => c.id === storedInvoice.customerId)
+      : undefined) ||
+    data.customers
+      .filter((c) => c.name.trim().toLowerCase() === (storedInvoice.customer || '').trim().toLowerCase())
+      .sort((a, b) => b.lastVisit.localeCompare(a.lastVisit))[0];
   const liveInvoice = (invoiceCustomer
     ? { ...storedInvoice, customer: invoiceCustomer.name, phone: invoiceCustomer.phone || '', address: invoiceCustomer.address || '' }
     : storedInvoice) as InvoiceRecord;

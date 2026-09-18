@@ -42,7 +42,13 @@ export default function ViewInvoicePanel({ invoice, onBack, onCreateNew }: Props
   const [recordingPayment, setRecordingPayment] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
   const { data, receivePayment } = useAppStore();
-  const liveInvoice = (data.invoices.find(i => i.id === invoice.id) || invoice) as InvoiceRecord;
+  const storedInvoice = data.invoices.find(i => i.id === invoice.id) || invoice;
+  const invoiceCustomer = storedInvoice.customerId
+    ? data.customers.find((c) => c.id === storedInvoice.customerId)
+    : undefined;
+  const liveInvoice = (invoiceCustomer
+    ? { ...storedInvoice, customer: invoiceCustomer.name, phone: invoiceCustomer.phone || '', address: invoiceCustomer.address || '' }
+    : storedInvoice) as InvoiceRecord;
   React.useEffect(() => {
     const handler = (event: Event) => {
       const id = (event as CustomEvent<string>).detail;

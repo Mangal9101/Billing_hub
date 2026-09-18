@@ -15,7 +15,14 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
   const { data } = useAppStore();
 
   // Use the latest customer record for WhatsApp/print contact details.
-  const currentCustomer = invoice.customerId ? data.customers.find((customer) => customer.id === invoice.customerId) : undefined;
+  // Older invoices may not have customerId, so resolve by customer name too.
+  const currentCustomer =
+    (invoice.customerId
+      ? data.customers.find((customer) => customer.id === invoice.customerId)
+      : undefined) ||
+    data.customers
+      .filter((customer) => customer.name.trim().toLowerCase() === (invoice.customer || '').trim().toLowerCase())
+      .sort((a, b) => b.lastVisit.localeCompare(a.lastVisit))[0];
   const currentPhone = currentCustomer?.phone || invoice.phone || '';
   const currentCustomerName = currentCustomer?.name || invoice.customer || 'Walk-in Customer';
   const currentAddress = currentCustomer?.address || invoice.address || '';
@@ -116,7 +123,7 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
             <div className="flex justify-between mb-5">
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Bill To</p>
-                <p className="font-semibold text-foreground">{invoice.customer || 'Walk-in Customer'}</p>
+                <p className="font-semibold text-foreground">{currentCustomerName}</p>
                 {currentPhone && <p className="text-xs text-muted-foreground font-mono">{currentPhone}</p>}
                 {currentAddress && <p className="text-xs text-muted-foreground">{currentAddress}</p>}
               </div>

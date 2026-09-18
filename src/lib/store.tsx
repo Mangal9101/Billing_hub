@@ -21,8 +21,10 @@ const EMPTY_BUSINESS = { name:'My Business', address:'', mobile:'', gstNumber:''
 const STORAGE_PREFIX = 'billing_hub_business_v4';
 const tokenKey = 'billing_hub_access_token_v4';
 
-// Serialize cloud writes so a slower older request can never overwrite a newer one.
-let remoteSaveQueue: Promise<void> = Promise.resolve();
+// Coalesce rapid cloud writes so several UI state changes are persisted as one
+// latest snapshot instead of creating a request waterfall under load.
+let pendingCloudSave: { data: AppData; reason: string; clientUpdatedAt: number } | null = null;
+let cloudSaveWorker: Promise<void> | null = null;
 let latestCloudSaveVersion = 0;
 let loadGeneration = 0;
 
@@ -260,67 +262,76 @@ async function remoteLoad(
 
 async function remoteSave(data: AppData, reason = 'Automatic backup before change', clientUpdatedAt = Date.now()) {
   if (typeof window === 'undefined') return;
-
   const session = getSession();
   const businessId = session?.companyId;
   if (!businessId) return;
 
-  const version = ++latestCloudSaveVersion;
+  pendingCloudSave = { data, reason, clientUpdatedAt };
+  latestCloudSaveVersion += 1;
+  if (cloudSaveWorker) return;
 
-  remoteSaveQueue = remoteSaveQueue.then(async () => {
-    let token = await getValidAccessToken();
-    if (!token) return;
-
-    const save = (accessToken: string) =>
-      fetch('/api/data', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          businessId,
-          payload: { ...data, _cloudUpdatedAt: clientUpdatedAt },
-          reason,
-          action: 'DATA_UPDATE',
-          summary: 'Billing Hub data changed',
-        }),
-      });
-
+  cloudSaveWorker = (async () => {
     try {
-      let r = await save(token);
+      while (pendingCloudSave) {
+        const job = pendingCloudSave;
+        pendingCloudSave = null;
+        let token = await getValidAccessToken();
+        if (!token) continue;
 
-      if (r.status === 401) {
-        const freshToken = await refreshAccessToken();
-        if (!freshToken) return;
-        token = freshToken;
-        r = await save(token);
-      }
+        const save = (accessToken: string) =>
+          fetch('/api/data', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              businessId,
+              payload: { ...job.data, _cloudUpdatedAt: job.clientUpdatedAt },
+              reason: job.reason,
+              action: 'DATA_UPDATE',
+              summary: 'Billing Hub data changed',
+            }),
+          });
 
-      if (!r.ok) {
-        console.warn('Cloud sync failed:', r.status);
-        return;
-      }
+        try {
+          let r = await save(token);
+          if (r.status === 401) {
+            const freshToken = await refreshAccessToken();
+            if (!freshToken) continue;
+            token = freshToken;
+            r = await save(token);
+          }
+          if (!r.ok) {
+            console.warn('Cloud sync failed:', r.status);
+            continue;
+          }
 
-      // Only sync the latest snapshot to Google Sheets.
-      if (version === latestCloudSaveVersion) {
-        void fetch('/api/sheets/sync', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ businessId, payload: data }),
-        }).catch(() => {});
+          // Only sync to Sheets when no newer local snapshot is waiting.
+          if (!pendingCloudSave) {
+            void fetch('/api/sheets/sync', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ businessId, payload: job.data }),
+            }).catch(() => {});
+          }
+        } catch (error) {
+          console.warn('Cloud sync error:', error);
+        }
       }
-    } catch (error) {
-      console.warn('Cloud sync error:', error);
+    } finally {
+      cloudSaveWorker = null;
+      if (pendingCloudSave) {
+        void remoteSave(pendingCloudSave.data, pendingCloudSave.reason, pendingCloudSave.clientUpdatedAt);
+      }
     }
-  });
+  })();
 
-  await remoteSaveQueue;
+  await cloudSaveWorker;
 }
-
 interface Store {
   data:AppData;
   ready:boolean;

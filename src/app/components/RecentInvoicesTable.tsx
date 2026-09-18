@@ -22,7 +22,7 @@ const PaymentBadge = ({ mode }: { mode: string }) => {
 export default function RecentInvoicesTable() {
   const {data,ready}=useAppStore();
   const router = useRouter();
-  const recentInvoices=data.invoices.slice(0,8).map((i:any)=>({...i,items:i.items.map((x:any)=>`${x.name} ×${x.qty}`).join(', ')}));
+  const recentInvoices=data.invoices.slice(0,8).map((i:any)=>({...i,items:Array.isArray(i.items)?i.items.map((x:any)=>`${x.name} ×${x.qty}`).join(', '):''}));
   if(!ready)return null;
 
   return (
@@ -59,8 +59,6 @@ export default function RecentInvoicesTable() {
             {recentInvoices.map((inv) => (
               <tr
                 key={inv.id}
-                onMouseEnter={() => setHoveredRow(inv.id)}
-                onMouseLeave={() => setHoveredRow(null)}
                 onClick={() => router.push(`/invoice-billing?invoice=${encodeURIComponent(inv.id)}`)}
                 className="border-b border-border last:border-0 transition-colors hover:bg-secondary/40 cursor-pointer"
                 title="Click to view invoice"

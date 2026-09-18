@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, IBM_Plex_Mono } from 'next/font/google';
 import '../styles/tailwind.css';
@@ -6,7 +6,7 @@ import { Toaster } from 'sonner';
 import { AppStoreProvider } from '@/lib/store';
 import AuthGate from '@/components/AuthGate';
 import SWRegister from './sw-register';
-import GoogleTranslate from '@/components/GoogleTranslate';
+import { startLocalLanguageObserver } from '@/lib/language';
 
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-dm-sans', display: 'swap' });
 const ibmPlexMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-ibm-plex-mono', display: 'swap' });

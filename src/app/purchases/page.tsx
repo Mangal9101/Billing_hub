@@ -254,13 +254,13 @@ export default function PurchasesPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={exportPurchasePDF}
-              className="btn-secondary flex items-center gap-2"
+              className="btn-secondary !px-3 !py-1.5 text-xs flex items-center gap-1.5"
               title="Export purchase list as PDF"
             >
-              <FileDown size={16} />Export PDF
+              <FileDown size={14} />Export PDF
             </button>
-            <button onClick={openAdd} className="btn-primary flex items-center gap-2">
-              <Plus size={16} />New Purchase
+            <button onClick={openAdd} className="btn-primary !px-3 !py-1.5 text-xs flex items-center gap-1.5">
+              <Plus size={14} />New Purchase
             </button>
           </div>
         </div>

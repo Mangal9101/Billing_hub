@@ -117,7 +117,7 @@ export default function KhatabookPage() {
       a.phone.includes(search)
   );
 
-  // Positive balance = customer se lena hai. Negative balance = customer ka advance.
+  // Positive balance = customer se  Negative balance = customer ka advance.
   const totalOutstanding = accounts.reduce((s, a) => s + Math.max(Number(a.balance || 0), 0), 0);
   const totalAdvance = accounts.reduce((s, a) => s + Math.max(Number(a.advance || 0), 0), 0);
 
@@ -258,7 +258,7 @@ export default function KhatabookPage() {
     setReminderAmount(
       account.balance > 0 ? String(account.balance) : ''
     );
-    setReminderNote('Payment Date');
+    setReminderNote('Payment Reminder');
     setShowReminderModal(true);
   };
 
@@ -498,7 +498,7 @@ export default function KhatabookPage() {
                       </h1>
 
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        Complete account details
+                        Account overview
                       </p>
                     </div>
                   </div>
@@ -599,18 +599,18 @@ export default function KhatabookPage() {
 
                         {advanceAmount > 0 && (
                           <p className="text-xs text-green-700 mt-3">
-                            Customer ke account me ₹
+                            Account balance includes ₹
                             {advanceAmount.toLocaleString('en-IN')}{' '}
-                            advance available hai. Agla credit isi
-                            This amount will be adjusted against future credit.
+                            advance available. This amount will be applied to future credit.
+                            This amount will be applied to future credit.
                           </p>
                         )}
 
                         {totalDue > 0 && advanceAmount === 0 && (
                           <p className="text-xs text-red-700/80 mt-3">
-                            Customer currently has ₹
+                            Outstanding balance: ₹
                             {totalDue.toLocaleString('en-IN')}{' '}
-                            lena hai.
+                            
                           </p>
                         )}
                       </div>
@@ -1025,7 +1025,7 @@ export default function KhatabookPage() {
                                 ? `Overdue · ${formatReminderDate(
                                     reminder.date
                                   )}`
-                                : 'Payment lena hai aaj'}
+                                : 'Payment due today'}
                             </p>
 
                             {reminder.note && (
@@ -1064,7 +1064,7 @@ export default function KhatabookPage() {
                             className="btn-secondary px-3 py-2 text-xs flex items-center gap-1.5"
                           >
                             <CheckCircle2 size={14} />
-                            Received / Complete
+                            Received / Completed
                           </button>
                         </div>
                       </div>
@@ -1084,7 +1084,7 @@ export default function KhatabookPage() {
                 <div className="card p-4 border-green-200 bg-green-50/30">
                   <p className="text-xs text-muted-foreground mb-1">Advance Received</p>
                   <p className="text-2xl font-bold text-green-600">₹{totalAdvance.toLocaleString('en-IN')}</p>
-                  <p className="text-xs text-green-600/80 mt-1">This amount will be adjusted against future credit.</p>
+                  <p className="text-xs text-green-600/80 mt-1">This amount will be applied to future credit.</p>
                 </div>
 
                 <div className="card p-4">
@@ -1274,7 +1274,7 @@ export default function KhatabookPage() {
                     min="1"
                   />
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Due se zyada payment lene par extra amount automatically Advance Received me chala jayega.
+                    Any amount received above the outstanding balance will be recorded as an advance.
                   </p>
                 </div>
 
@@ -1346,7 +1346,7 @@ export default function KhatabookPage() {
                   </p>
 
                   <p className="text-xs text-muted-foreground">
-                    Current due:{' '}
+                    Current outstanding:{' '}
                     <span className="text-red-600 font-semibold">
                       ₹
                       {selectedAccount.balance.toLocaleString(
@@ -1471,7 +1471,7 @@ export default function KhatabookPage() {
                   />
 
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Example: If the customer says “I will pay on the 25th,” select the 25th as the payment date.
+                    Select the date on which the payment is expected.
                   </p>
                 </div>
 
@@ -1540,7 +1540,7 @@ export default function KhatabookPage() {
             <div className="bg-card rounded-xl shadow-xl w-full max-w-md mx-4 scale-in">
               <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                 <h2 className="text-lg font-semibold text-foreground">
-                  New Account Entry
+                  New Account
                 </h2>
 
                 <button
@@ -1654,7 +1654,7 @@ export default function KhatabookPage() {
                         ? 'border-red-400'
                         : ''
                     }`}
-                    placeholder="e.g. Invoice for Diwali sweets"
+                    placeholder="e.g. Invoice reference or description"
                     value={newAccount.description}
                     onChange={(e) =>
                       setNewAccount({

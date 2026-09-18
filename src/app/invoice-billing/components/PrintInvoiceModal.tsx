@@ -19,7 +19,19 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
   };
 
   const handleWhatsApp = () => {
-    const cleanPhone = (invoice.phone || '').replace(/\D/g, '');
+    // WhatsApp expects an international number without the leading +.
+    // For Indian customers, convert a normal 10-digit mobile number to +91XXXXXXXXXX.
+    const rawPhone = (invoice.phone || '').trim();
+    const digits = rawPhone.replace(/\D/g, '');
+    let cleanPhone = digits;
+
+    if (digits.length === 10 && /^[6-9]\d{9}$/.test(digits)) {
+      cleanPhone = `91${digits}`;
+    } else if (digits.length === 11 && digits.startsWith('0')) {
+      cleanPhone = `91${digits.slice(1)}`;
+    } else if (digits.length === 12 && digits.startsWith('91')) {
+      cleanPhone = digits;
+    }
     const customer = invoice.customer || 'Walk-in Customer';
     const lines = [
       `*${data.business.name || 'My Business'}*`,

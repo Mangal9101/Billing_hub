@@ -7,7 +7,6 @@ import { AppStoreProvider } from '@/lib/store';
 import AuthGate from '@/components/AuthGate';
 import SWRegister from './sw-register';
 import GoogleTranslate from '@/components/GoogleTranslate';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-dm-sans', display: 'swap' });
 const ibmPlexMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-ibm-plex-mono', display: 'swap' });
@@ -27,7 +26,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={dmSans.className}>
         <AppStoreProvider><AuthGate>{children}</AuthGate></AppStoreProvider>
         <GoogleTranslate />
-        <LanguageSwitcher />
         <SWRegister />
         <Toaster position="bottom-right" richColors closeButton />
       </body>

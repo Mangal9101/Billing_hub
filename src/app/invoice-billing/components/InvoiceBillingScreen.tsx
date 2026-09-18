@@ -38,7 +38,16 @@ export default function InvoiceBillingScreen() {
   // Old invoices retain their original billing data, but customer phone/name/address
   // should update everywhere when the customer master record is edited.
   const invoices = data.invoices.map((inv) => {
-    const customer = inv.customerId ? data.customers.find((c) => c.id === inv.customerId) : undefined;
+    // Older invoices may not have customerId. Resolve them by the customer
+    // master name as a fallback so edited phone/address details are used too.
+    const customer =
+      (inv.customerId
+        ? data.customers.find((c) => c.id === inv.customerId)
+        : undefined) ||
+      data.customers
+        .filter((c) => c.name.trim().toLowerCase() === (inv.customer || '').trim().toLowerCase())
+        .sort((a, b) => b.lastVisit.localeCompare(a.lastVisit))[0];
+
     return customer
       ? { ...inv, customer: customer.name, phone: customer.phone || '', address: customer.address || '' }
       : inv;

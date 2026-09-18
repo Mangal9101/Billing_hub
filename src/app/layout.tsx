@@ -25,7 +25,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className={`${dmSans.variable} ${ibmPlexMono.variable}`}>
       <body className={dmSans.className}>
         <AppStoreProvider><AuthGate>{children}</AuthGate></AppStoreProvider>
-        <GoogleTranslate />
         <SWRegister />
         <Toaster position="bottom-right" richColors closeButton />
       </body>

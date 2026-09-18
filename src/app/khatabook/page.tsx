@@ -377,7 +377,7 @@ export default function KhatabookPage() {
       `Hello ${reminder.customerName},\n\n` +
       `A payment of ₹${reminder.amount.toLocaleString('en-IN')} is due on your account.` +
       `\nPayment was scheduled for ${formatReminderDate(reminder.date)}.` +
-      `\n\nPlease payment kar dein.\n\n` +
+      `\n\nPlease make the payment.\n\n` +
       `— ${businessName}`;
 
     const url = `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
@@ -602,13 +602,13 @@ export default function KhatabookPage() {
                             Customer ke account me ₹
                             {advanceAmount.toLocaleString('en-IN')}{' '}
                             advance available hai. Agla credit isi
-                            advance se adjust hoga.
+                            This amount will be adjusted against future credit.
                           </p>
                         )}
 
                         {totalDue > 0 && advanceAmount === 0 && (
                           <p className="text-xs text-red-700/80 mt-3">
-                            Customer se abhi ₹
+                            Customer currently has ₹
                             {totalDue.toLocaleString('en-IN')}{' '}
                             lena hai.
                           </p>
@@ -879,7 +879,7 @@ export default function KhatabookPage() {
                       </p>
 
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Customer ki promised payment date set karo. Due date par Billing Hub owner ko reminder dikhayega.
+                        Set the customer's promised payment date. Billing Hub will show a reminder to the owner on the due date.
                       </p>
                     </div>
                   </div>
@@ -1084,7 +1084,7 @@ export default function KhatabookPage() {
                 <div className="card p-4 border-green-200 bg-green-50/30">
                   <p className="text-xs text-muted-foreground mb-1">Advance Received</p>
                   <p className="text-2xl font-bold text-green-600">₹{totalAdvance.toLocaleString('en-IN')}</p>
-                  <p className="text-xs text-green-600/80 mt-1">Future credit me adjust hoga</p>
+                  <p className="text-xs text-green-600/80 mt-1">This amount will be adjusted against future credit.</p>
                 </div>
 
                 <div className="card p-4">
@@ -1471,7 +1471,7 @@ export default function KhatabookPage() {
                   />
 
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Example: Customer bole “25 tareekh ko de dunga” → date 25 select karo.
+                    Example: If the customer says “I will pay on the 25th,” select the 25th as the payment date.
                   </p>
                 </div>
 

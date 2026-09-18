@@ -517,7 +517,7 @@ export default function Sidebar({
         {!collapsed && (
           <div className="px-3 pt-1 pb-0">
             <p className="text-[10px] text-muted-foreground px-2">
-              Billing Hub · BILL. MANAGE. GROW.
+              Billing Hub
             </p>
           </div>
         )}
@@ -629,7 +629,7 @@ export default function Sidebar({
 
         <div className="px-4 pt-1">
           <p className="text-[10px] text-muted-foreground">
-            Billing Hub · BILL. MANAGE. GROW.
+            Billing Hub
           </p>
         </div>
 

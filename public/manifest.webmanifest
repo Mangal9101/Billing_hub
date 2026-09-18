@@ -13,9 +13,15 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "15x16 30x32 44x48",
-      "type": "image/x-icon",
+      "src": "/assets/images/app_logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/billing_hub_brand.png",
+      "sizes": "any",
+      "type": "image/png",
       "purpose": "any"
     }
   ]

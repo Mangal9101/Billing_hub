@@ -258,7 +258,7 @@ export default function KhatabookPage() {
     setReminderAmount(
       account.balance > 0 ? String(account.balance) : ''
     );
-    setReminderNote('Payment dene ka bola hai');
+    setReminderNote('Payment Date');
     setShowReminderModal(true);
   };
 
@@ -350,8 +350,8 @@ export default function KhatabookPage() {
       new Notification('Billing Hub — Payment Due Today', {
         body:
           dueTodayReminders.length === 1
-            ? `${first.customerName} — ₹${first.amount.toLocaleString('en-IN')} payment lena hai aaj.`
-            : `${dueTodayReminders.length} customers ki payment aaj due hai.`,
+            ? `${first.customerName} — ₹${first.amount.toLocaleString('en-IN')} Payment due today.`
+            : `${dueTodayReminders.length} customer payments are due today.`,
       });
 
       sessionStorage.setItem(notifiedKey, '1');
@@ -375,8 +375,8 @@ export default function KhatabookPage() {
 
     const message =
       `Hello ${reminder.customerName},\n\n` +
-      `Aapke account me ₹${reminder.amount.toLocaleString('en-IN')} payment due hai.` +
-      `\nAapne ${formatReminderDate(reminder.date)} ko payment dene ka bola tha.` +
+      `A payment of ₹${reminder.amount.toLocaleString('en-IN')} is due on your account.` +
+      `\nPayment was scheduled for ${formatReminderDate(reminder.date)}.` +
       `\n\nPlease payment kar dein.\n\n` +
       `— ${businessName}`;
 
@@ -704,7 +704,7 @@ export default function KhatabookPage() {
 
                                   <p className="text-xs text-muted-foreground mt-1">
                                     {isDue
-                                      ? 'Payment lena hai aaj / overdue'
+                                      ? 'Payment due today / Overdue'
                                       : `Payment date: ${formatReminderDate(
                                           reminder.date
                                         )}`}
@@ -1501,7 +1501,7 @@ export default function KhatabookPage() {
 
                   <input
                     className="input-field"
-                    placeholder="e.g. 25 tareekh ko payment dene ka bola"
+                    placeholder="e.g. Payment scheduled for 25th"
                     value={reminderNote}
                     onChange={(e) =>
                       setReminderNote(

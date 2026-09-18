@@ -113,11 +113,34 @@ function repairData(input:any, identity?:{businessId?:string; ownerName?:string;
     // customer's master phone/name was later changed. Older code discarded a
     // valid customerId when its current details no longer matched the invoice's
     // historical details, which caused duplicate customers and stale numbers.
+    const invoicePhone=normalizePhone(inv.phone||'');
+    const sameNameCustomers=customers.filter(
+      c=>c.name.trim().toLowerCase()===name.toLowerCase()
+    );
     const linked=inv.customerId ? customers.find(c=>c.id===inv.customerId) : undefined;
     const ledgerLink=d.ledger.find((entry:any)=>entry.invoiceId===inv.id)?.customerId;
     const ledgerCustomer=ledgerLink ? customers.find(c=>c.id===ledgerLink) : undefined;
     const exact=findCustomer(name,inv.phone||'');
-    let c=linked || ledgerCustomer || exact;
+
+    // If an old invoice still carries its historical phone, prefer a current
+    // customer record with the same name but a different phone. This handles
+    // legacy invoices and duplicate customer records created before the
+    // customerId linkage was repaired.
+    const currentNameMatch=sameNameCustomers.find(
+      c=>normalizePhone(c.phone)!==invoicePhone
+    );
+
+    let c=linked || ledgerCustomer || currentNameMatch || exact;
+
+    // If the linked record is still carrying the invoice's old phone while
+    // another same-name customer has the newer phone, use that newer record.
+    if(
+      linked &&
+      currentNameMatch &&
+      normalizePhone(linked.phone)===invoicePhone
+    ){
+      c=currentNameMatch;
+    }
 
     if(!c){
       c={
@@ -133,7 +156,16 @@ function repairData(input:any, identity?:{businessId?:string; ownerName?:string;
       customers.push(c);
     }
 
-    return {...inv,customerId:c.id};
+    // Keep the invoice's displayed customer details synchronized with
+    // the current customer master record. The original invoice totals/items
+    // remain unchanged; only customer contact fields are refreshed.
+    return {
+      ...inv,
+      customerId:c.id,
+      customer:c.name,
+      phone:c.phone||'',
+      address:c.address||''
+    };
   });
 
   // Make sure every unpaid invoice has a ledger debit.

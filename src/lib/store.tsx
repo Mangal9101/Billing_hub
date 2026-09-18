@@ -113,34 +113,20 @@ function repairData(input:any, identity?:{businessId?:string; ownerName?:string;
     // customer's master phone/name was later changed. Older code discarded a
     // valid customerId when its current details no longer matched the invoice's
     // historical details, which caused duplicate customers and stale numbers.
-    const invoicePhone=normalizePhone(inv.phone||'');
-    const sameNameCustomers=customers.filter(
-      c=>c.name.trim().toLowerCase()===name.toLowerCase()
-    );
     const linked=inv.customerId ? customers.find(c=>c.id===inv.customerId) : undefined;
     const ledgerLink=d.ledger.find((entry:any)=>entry.invoiceId===inv.id)?.customerId;
     const ledgerCustomer=ledgerLink ? customers.find(c=>c.id===ledgerLink) : undefined;
     const exact=findCustomer(name,inv.phone||'');
-
-    // If an old invoice still carries its historical phone, prefer a current
-    // customer record with the same name but a different phone. This handles
-    // legacy invoices and duplicate customer records created before the
-    // customerId linkage was repaired.
-    const currentNameMatch=sameNameCustomers.find(
-      c=>normalizePhone(c.phone)!==invoicePhone
+    const sameNameCustomers=customers.filter(
+      c=>c.name.trim().toLowerCase()===name.toLowerCase()
     );
 
-    let c=linked || ledgerCustomer || currentNameMatch || exact;
-
-    // If the linked record is still carrying the invoice's old phone while
-    // another same-name customer has the newer phone, use that newer record.
-    if(
-      linked &&
-      currentNameMatch &&
-      normalizePhone(linked.phone)===invoicePhone
-    ){
-      c=currentNameMatch;
-    }
+    // A saved customerId is authoritative. Never replace it merely because
+    // the invoice contains an older phone/name snapshot.
+    // For legacy invoices without a link, use an exact name+phone match;
+    // if there is exactly one customer with that name, link it.
+    let c=linked || ledgerCustomer || exact;
+    if(!c && sameNameCustomers.length===1) c=sameNameCustomers[0];
 
     if(!c){
       c={
@@ -682,11 +668,17 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
         const invoicePhone=normalizePhone(inv.phone||'');
 
         const linkedById=inv.customerId===id;
-        const linkedByOldDetails=
+        const legacyMatch=
           invoiceName===oldName &&
           (!!oldPhone ? invoicePhone===oldPhone : true);
 
-        if(!linkedById&&!linkedByOldDetails) return inv;
+        // Once a customer is edited, all historical invoices belonging to
+        // that customer name are updated to the new master contact details.
+        // This also repairs invoices that were created before customerId
+        // linkage existed.
+        const sameCustomerName=invoiceName===oldName;
+
+        if(!linkedById&&!legacyMatch&&!sameCustomerName) return inv;
 
         return {
           ...inv,
@@ -697,10 +689,23 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
         };
       });
 
+      const affectedInvoiceIds=new Set(
+        invoices
+          .filter(inv=>inv.customerId===id)
+          .map(inv=>inv.id)
+      );
+
+      const ledger=d.ledger.map(entry=>
+        entry.invoiceId && affectedInvoiceIds.has(entry.invoiceId)
+          ? {...entry,customerId:id}
+          : entry
+      );
+
       return {
         ...d,
         customers:d.customers.map(x=>x.id===id?nextCustomer:x),
-        invoices
+        invoices,
+        ledger
       };
     });
 

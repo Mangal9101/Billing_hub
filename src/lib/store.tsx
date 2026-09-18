@@ -357,7 +357,10 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
       session.isOwner?session.name:undefined,
       session.isOwner?session.email:undefined
     );
+    // Render the cached snapshot immediately. Do not block the whole app
+    // on the Supabase round-trip; the cloud snapshot is merged in below.
     setData(cached);
+    setReady(true);
 
     const freshToken=await getValidAccessToken();
     const remote=await remoteLoad(

@@ -22,7 +22,7 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
       : undefined) ||
     data.customers
       .filter((customer) => customer.name.trim().toLowerCase() === (invoice.customer || '').trim().toLowerCase())
-      .sort((a, b) => b.lastVisit.localeCompare(a.lastVisit))[0];
+      [0];
   const currentPhone = currentCustomer?.phone || invoice.phone || '';
   const currentCustomerName = currentCustomer?.name || invoice.customer || 'Walk-in Customer';
   const currentAddress = currentCustomer?.address || invoice.address || '';

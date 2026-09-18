@@ -194,7 +194,7 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
 
             {/* Footer */}
             <div className="border-t border-border pt-3 text-center">
-              <p className="text-xs text-muted-foreground">Thank you for your purchase.</p>
+              <p className="text-xs text-muted-foreground">Thank you for your business.</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">
                 Goods once sold will not be taken back
               </p>

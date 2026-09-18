@@ -70,7 +70,7 @@ export default function ViewInvoicePanel({ invoice, onBack, onCreateNew }: Props
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card sticky top-0 z-10">
+      <div className="invoice-view-header flex items-center justify-between px-6 py-4 border-b border-border bg-card sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
@@ -87,17 +87,17 @@ export default function ViewInvoicePanel({ invoice, onBack, onCreateNew }: Props
             <p className="text-xs text-muted-foreground">{liveInvoice.date} · {liveInvoice.time}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="invoice-view-actions flex items-center gap-2">
           <button
             onClick={() => setShowPrint(true)}
-            className="btn-secondary flex items-center gap-1.5 text-sm py-2"
+            className="btn-secondary invoice-view-print flex items-center gap-1.5 text-sm py-2"
           >
             <Printer size={15} />
             Print
           </button>
           <button
             onClick={onCreateNew}
-            className="btn-primary flex items-center gap-1.5 text-sm py-2"
+            className="btn-primary invoice-new-bill flex items-center gap-1.5 text-sm py-2"
           >
             <Plus size={15} />
             New Bill

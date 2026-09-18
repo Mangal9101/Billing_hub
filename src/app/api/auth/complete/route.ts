@@ -56,29 +56,32 @@ async function ensureOwnerBusiness(user: any) {
   const businessId = getOwnerBusinessId(userId);
   const businessName = `${name}'s Business`;
 
-  const business = await supabaseAdmin('businesses', {
-    method: 'POST',
-    headers: { Prefer: 'resolution=merge-duplicates' },
-    body: JSON.stringify({
-      id: businessId,
-      name: businessName,
-      owner_id: userId,
+  // These writes are independent, so run them together instead of paying
+  // for two sequential Supabase round trips during first-time Google login.
+  const [business, membership] = await Promise.all([
+    supabaseAdmin('businesses', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify({
+        id: businessId,
+        name: businessName,
+        owner_id: userId,
+      }),
     }),
-  });
+    supabaseAdmin('business_members', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify({
+        business_id: businessId,
+        user_id: userId,
+        role: 'owner',
+        permissions: defaultPermissions('owner'),
+      }),
+    }),
+  ]);
   if (!business.ok) {
     throw new Error(`Unable to create business: ${await business.text()}`);
   }
-
-  const membership = await supabaseAdmin('business_members', {
-    method: 'POST',
-    headers: { Prefer: 'resolution=merge-duplicates' },
-    body: JSON.stringify({
-      business_id: businessId,
-      user_id: userId,
-      role: 'owner',
-      permissions: defaultPermissions('owner'),
-    }),
-  });
   if (!membership.ok) {
     throw new Error(`Unable to create business membership: ${await membership.text()}`);
   }
@@ -177,17 +180,27 @@ export async function POST(req: NextRequest) {
       }
 
       const role = String(membership.role || 'owner').toLowerCase();
-      const storedName = await storedOwnerName(companyId);
+
+      // These checks do not depend on one another. Run them concurrently so
+      // Google callback completion is limited by the slowest Supabase request,
+      // rather than the sum of several network round trips.
+      const [storedName, device, businessRows] = await Promise.all([
+        storedOwnerName(companyId),
+        trustedDevice(uid, deviceId),
+        role === 'owner'
+          ? supabaseAdmin(
+              `businesses?id=eq.${encodeURIComponent(companyId)}&select=id,owner_id&limit=1`
+            ).then(async (response) => {
+              if (!response.ok) throw new Error(`Unable to verify business owner: ${await response.text()}`);
+              return response.json();
+            })
+          : Promise.resolve([]),
+      ]);
       const resolvedName = bestOwnerName(user, storedName);
 
       // Repair the old shared-owner edge case: an owner membership is valid only
       // when the business itself is owned by the same Supabase Auth user.
       if (role === 'owner') {
-        const businessCheck = await supabaseAdmin(
-          `businesses?id=eq.${encodeURIComponent(companyId)}&select=id,owner_id&limit=1`
-        );
-        if (!businessCheck.ok) throw new Error(`Unable to verify business owner: ${await businessCheck.text()}`);
-        const businessRows = await businessCheck.json();
         const businessOwnerId = businessRows?.[0]?.owner_id;
         if (businessOwnerId && String(businessOwnerId) !== uid) {
           await supabaseAdmin(
@@ -209,7 +222,6 @@ export async function POST(req: NextRequest) {
           ? membership.permissions
           : defaultPermissions(role as any);
 
-      const device = await trustedDevice(uid, deviceId);
       if (!device.trusted && !otpVerified) {
         return NextResponse.json({
           needsEmailOtp: true,

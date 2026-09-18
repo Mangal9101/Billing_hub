@@ -151,25 +151,8 @@ export function setLanguage(language: AppLanguage) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(LANGUAGE_KEY, language);
   document.documentElement.lang = language;
-  applyLocalLanguage(language);
-  window.dispatchEvent(new CustomEvent('billing-hub-language-change', { detail: language }));
+  // Reload so the DOM starts from the original English strings before applying Hindi.
+  // The selected language remains persisted in localStorage and works offline.
+  window.location.reload();
 }
 
-export function startLocalLanguageObserver() {
-  if (typeof window === 'undefined' || typeof document === 'undefined') return () => {};
-
-  const language = getLanguage();
-  applyLocalLanguage(language);
-
-  const observer = new MutationObserver((mutations) => {
-    const current = getLanguage();
-    for (const mutation of mutations) {
-      for (const node of Array.from(mutation.addedNodes)) {
-        translateNode(node, current);
-      }
-    }
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
-  return () => observer.disconnect();
-}

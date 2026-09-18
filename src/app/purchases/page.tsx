@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Plus, Search, Edit2, Trash2, X, ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, ShoppingCart, ChevronDown, ChevronUp, FileDown } from 'lucide-react';
 import { useAppStore, type Purchase, type PurchaseItem } from '@/lib/store';
 
 const emptyForm: {supplier:string;phone:string;mode:'Cash'|'UPI'|'Credit';notes:string;items:{name:string;qty:number;unitPrice:number;total:number}[]} = { supplier: '', phone: '', mode: 'Cash', notes: '', items: [{ name: '', qty: 1, unitPrice: 0, total: 0 }] };
@@ -106,6 +106,141 @@ export default function PurchasesPage() {
 
   const totalDue = purchases.reduce((s, p) => s + p.due, 0);
 
+  const exportPurchasePDF = () => {
+    const escapeHtml = (value: unknown) =>
+      String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+    const rows = filtered.map((p, index) => {
+      const itemRows = p.items.map(item => `
+        <tr>
+          <td>${escapeHtml(item.name)}</td>
+          <td class="num">${item.qty}</td>
+          <td class="num">₹${Number(item.unitPrice || 0).toLocaleString('en-IN')}</td>
+          <td class="num">₹${Number(item.total || 0).toLocaleString('en-IN')}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <tr class="purchase-row">
+          <td>${index + 1}</td>
+          <td><strong>${escapeHtml(p.id)}</strong></td>
+          <td>${escapeHtml(p.supplier)}${p.phone ? `<div class="muted">${escapeHtml(p.phone)}</div>` : ''}</td>
+          <td>${escapeHtml(p.date)}</td>
+          <td class="num">₹${Number(p.total || 0).toLocaleString('en-IN')}</td>
+          <td class="num ${p.due > 0 ? 'due' : 'paid'}">${p.due > 0 ? '₹' + Number(p.due).toLocaleString('en-IN') : '—'}</td>
+        </tr>
+        <tr class="items-row">
+          <td></td>
+          <td colspan="5">
+            <table class="items">
+              <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Item Total</th></tr></thead>
+              <tbody>${itemRows}</tbody>
+            </table>
+            ${p.notes ? `<div class="note">Note: ${escapeHtml(p.notes)}</div>` : ''}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    const business = data.business;
+    const logo = business.logoUrl
+      ? `<img src="${escapeHtml(business.logoUrl)}" alt="" class="logo" />`
+      : `<div class="logo text-logo">${escapeHtml((business.name || 'B').trim().charAt(0).toUpperCase())}</div>`;
+
+    const win = window.open('', '_blank', 'width=1100,height=800');
+    if (!win) {
+      alert('Please allow pop-ups for this site to export the PDF.');
+      return;
+    }
+
+    win.document.write(`<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Purchase List - ${escapeHtml(business.name || 'Business')}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 28px; font-family: Arial, Helvetica, sans-serif; color: #1f2937; background: #fff; font-size: 12px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #111827; padding-bottom: 16px; margin-bottom: 18px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 46px; height: 46px; border-radius: 10px; object-fit: cover; border: 1px solid #e5e7eb; }
+  .text-logo { display: flex; align-items: center; justify-content: center; background: #f3f4f6; font-size: 22px; font-weight: 700; }
+  h1 { margin: 0 0 4px; font-size: 21px; color: #111827; }
+  .business-meta, .muted { color: #6b7280; font-size: 10px; margin-top: 2px; }
+  .report-title { text-align: right; }
+  .report-title h2 { margin: 0 0 5px; font-size: 18px; }
+  .summary { display: flex; gap: 28px; margin-bottom: 16px; }
+  .summary span { color: #6b7280; }
+  .summary strong { color: #111827; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #f3f4f6; color: #374151; font-weight: 700; text-align: left; padding: 8px 7px; border: 1px solid #e5e7eb; }
+  td { padding: 8px 7px; border: 1px solid #e5e7eb; vertical-align: top; }
+  .num { text-align: right; white-space: nowrap; }
+  .due { color: #dc2626; font-weight: 700; }
+  .paid { color: #059669; font-weight: 700; }
+  .items-row td { border-top: 0; background: #fafafa; padding-top: 5px; padding-bottom: 10px; }
+  .items { width: 75%; margin-left: 0; font-size: 10px; }
+  .items th { padding: 5px; background: #fff; }
+  .items td { padding: 5px; background: #fff; }
+  .note { margin-top: 6px; color: #6b7280; font-style: italic; font-size: 10px; }
+  .total { margin-top: 14px; margin-left: auto; width: 300px; }
+  .total div { display: flex; justify-content: space-between; padding: 5px 0; }
+  .grand { border-top: 2px solid #111827; font-size: 14px; font-weight: 700; }
+  .footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 9px; text-align: center; }
+  @page { size: A4 portrait; margin: 12mm; }
+  @media print { body { padding: 0; } .purchase-row { break-after: avoid; } .items-row { break-before: avoid; } }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      ${logo}
+      <div>
+        <h1>${escapeHtml(business.name || 'My Business')}</h1>
+        ${business.address ? `<div class="business-meta">${escapeHtml(business.address)}</div>` : ''}
+        ${business.mobile ? `<div class="business-meta">Mobile: ${escapeHtml(business.mobile)}</div>` : ''}
+        ${business.gstNumber ? `<div class="business-meta">GSTIN: ${escapeHtml(business.gstNumber)}</div>` : ''}
+      </div>
+    </div>
+    <div class="report-title">
+      <h2>Purchase List</h2>
+      <div class="business-meta">Generated: ${escapeHtml(new Date().toLocaleString('en-IN'))}</div>
+      ${search ? `<div class="business-meta">Search: ${escapeHtml(search)}</div>` : ''}
+    </div>
+  </div>
+
+  <div class="summary">
+    <div><span>Purchases:</span> <strong>${filtered.length}</strong></div>
+    <div><span>Total:</span> <strong>₹${filtered.reduce((s, p) => s + Number(p.total || 0), 0).toLocaleString('en-IN')}</strong></div>
+    <div><span>Pending:</span> <strong>₹${filtered.reduce((s, p) => s + Number(p.due || 0), 0).toLocaleString('en-IN')}</strong></div>
+  </div>
+
+  <table>
+    <thead><tr><th>#</th><th>Purchase ID</th><th>Supplier</th><th>Date</th><th class="num">Total</th><th class="num">Due</th></tr></thead>
+    <tbody>
+      ${rows || '<tr><td colspan="6" style="text-align:center;padding:24px">No purchases found</td></tr>'}
+    </tbody>
+  </table>
+
+  <div class="total">
+    <div><span>Total Purchases</span><strong>₹${filtered.reduce((s, p) => s + Number(p.total || 0), 0).toLocaleString('en-IN')}</strong></div>
+    <div><span>Total Paid</span><strong>₹${filtered.reduce((s, p) => s + Number(p.paid || 0), 0).toLocaleString('en-IN')}</strong></div>
+    <div class="grand"><span>Total Due</span><span>₹${filtered.reduce((s, p) => s + Number(p.due || 0), 0).toLocaleString('en-IN')}</span></div>
+  </div>
+
+  <div class="footer">Purchase report · ${escapeHtml(business.name || 'Billing Hub')}</div>
+</body>
+</html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 300);
+  };
+
   if (!ready) return null;
 
   return (
@@ -116,9 +251,18 @@ export default function PurchasesPage() {
             <h1 className="text-2xl font-bold text-foreground">Purchases</h1>
             <p className="text-sm text-muted-foreground mt-0.5">{purchases.length} purchases · ₹{totalDue.toLocaleString('en-IN')} pending payment</p>
           </div>
-          <button onClick={openAdd} className="btn-primary flex items-center gap-2">
-            <Plus size={16} />New Purchase
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={exportPurchasePDF}
+              className="btn-secondary flex items-center gap-2"
+              title="Export purchase list as PDF"
+            >
+              <FileDown size={16} />Export PDF
+            </button>
+            <button onClick={openAdd} className="btn-primary flex items-center gap-2">
+              <Plus size={16} />New Purchase
+            </button>
+          </div>
         </div>
 
         <div className="relative max-w-sm">

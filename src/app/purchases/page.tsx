@@ -18,6 +18,28 @@ export default function PurchasesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
+  const [activeItemSuggestion, setActiveItemSuggestion] = useState<number | null>(null);
+
+  const productSuggestions = (idx: number) => {
+    const query = form.items[idx]?.name?.trim().toLowerCase() || '';
+    if (!query) return [];
+    return data.products.filter(product =>
+      product.name.toLowerCase().includes(query)
+    ).slice(0, 8);
+  };
+
+  const selectProduct = (idx: number, product: typeof data.products[number]) => {
+    const items = [...form.items];
+    items[idx] = {
+      ...items[idx],
+      name: product.name,
+      unitPrice: product.price,
+      total: items[idx].qty * product.price,
+      productId: product.id,
+    };
+    setForm({ ...form, items });
+    setActiveItemSuggestion(null);
+  };
 
   const filtered = purchases.filter(
     (p) => p.supplier.toLowerCase().includes(search.toLowerCase()) || p.id.includes(search)
@@ -32,7 +54,10 @@ export default function PurchasesPage() {
     setForm({ ...form, items });
   };
 
-  const addItem = () => setForm({ ...form, items: [...form.items, { name: '', qty: 1, unitPrice: 0, total: 0 }] });
+  const addItem = () => {
+    setActiveItemSuggestion(null);
+    setForm({ ...form, items: [...form.items, { name: '', qty: 1, unitPrice: 0, total: 0 }] });
+  };
   const removeItem = (idx: number) => setForm({ ...form, items: form.items.filter((_, i) => i !== idx) });
 
   const formTotal = form.items.reduce((s, i) => s + i.total, 0);
@@ -197,7 +222,38 @@ export default function PurchasesPage() {
                 <div className="space-y-2">
                   {form.items.map((item, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                      <input className="input-field col-span-5" placeholder="Item name" value={item.name} onChange={(e) => updateItem(idx, 'name', e.target.value)} />
+                      <div className="col-span-5 relative">
+                        <input
+                          className="input-field w-full"
+                          placeholder="Item name"
+                          value={item.name}
+                          autoComplete="off"
+                          onFocus={() => setActiveItemSuggestion(idx)}
+                          onChange={(e) => {
+                            updateItem(idx, 'name', e.target.value);
+                            setActiveItemSuggestion(idx);
+                          }}
+                        />
+                        {activeItemSuggestion === idx && productSuggestions(idx).length > 0 && (
+                          <div className="absolute left-0 right-0 top-full mt-1 z-[70] bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+                            {productSuggestions(idx).map(product => (
+                              <button
+                                key={product.id}
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => selectProduct(idx, product)}
+                                className="w-full text-left px-3 py-2.5 hover:bg-secondary/60 transition-colors border-b border-border last:border-0"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="font-medium text-foreground truncate">{product.name}</span>
+                                  <span className="text-xs text-muted-foreground shrink-0">₹{product.price.toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-0.5">Stock: {product.stock} {product.unit}</div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       <input type="number" className="input-field col-span-2" placeholder="Qty" value={item.qty || ''} onChange={(e) => updateItem(idx, 'qty', Number(e.target.value))} />
                       <input type="number" className="input-field col-span-3" placeholder="Price" value={item.unitPrice || ''} onChange={(e) => updateItem(idx, 'unitPrice', Number(e.target.value))} />
                       <button onClick={() => removeItem(idx)} className="col-span-1 p-1.5 rounded hover:bg-red-50 hover:text-red-600 text-muted-foreground transition-colors" disabled={form.items.length === 1}><X size={14} /></button>

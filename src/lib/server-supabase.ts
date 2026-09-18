@@ -33,22 +33,15 @@ export async function supabaseAuthUser(accessToken: string) {
 export async function verifyCompanyMembership(userId: string) {
   if (!userId) return null;
 
-  // Prefer an owner membership when one exists. This prevents a user who owns
-  // one business and works as staff in another from being logged into the wrong
-  // business on a fresh session.
-  const ownerResponse = await supabaseAdmin(
-    `business_members?user_id=eq.${encodeURIComponent(userId)}&role=eq.owner&select=business_id,role,permissions&order=created_at.asc&limit=1`
-  );
-  if (!ownerResponse.ok) throw new Error(`Unable to verify business membership: ${await ownerResponse.text()}`);
-  const ownerRows = await ownerResponse.json();
-  if (Array.isArray(ownerRows) && ownerRows.length) return ownerRows[0];
-
+  // Resolve all memberships in one round trip. Prefer the owner's business
+  // locally so login/data requests do not need a second Supabase query.
   const r = await supabaseAdmin(
-    `business_members?user_id=eq.${encodeURIComponent(userId)}&select=business_id,role,permissions&order=created_at.asc&limit=1`
+    `business_members?user_id=eq.${encodeURIComponent(userId)}&select=business_id,role,permissions,created_at&order=created_at.asc`
   );
   if (!r.ok) throw new Error(`Unable to verify business membership: ${await r.text()}`);
   const rows = await r.json();
-  return Array.isArray(rows) && rows.length ? rows[0] : null;
+  if (!Array.isArray(rows) || !rows.length) return null;
+  return rows.find((row:any) => String(row?.role || '').toLowerCase() === 'owner') || rows[0];
 }
 
 export async function verifySpecificBusinessMembership(userId: string, businessId: string) {

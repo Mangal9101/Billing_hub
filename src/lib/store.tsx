@@ -413,7 +413,7 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
 
     const t=window.setTimeout(
       ()=>void remoteSave(data),
-      500
+      150
     );
 
     return()=>window.clearTimeout(t);
@@ -1057,12 +1057,24 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
       );
     });
   const updatePurchase=(id:string,p:Partial<Purchase>)=>
-    setData(d=>({
-      ...d,
-      purchases:d.purchases.map(x=>
-        x.id===id?{...x,...p}:x
-      )
-    }));
+    setData(d=>{
+      const existing=d.purchases.find(x=>x.id===id);
+      if(!existing) return d;
+
+      const updatedPurchase:Purchase={
+        ...existing,
+        ...p,
+        id:existing.id,
+        date:p.date || existing.date,
+      };
+
+      return {
+        ...d,
+        purchases:d.purchases.map(x=>
+          x.id===id?updatedPurchase:x
+        )
+      };
+    });
 
   const deletePurchase=(id:string)=>
     setData(d=>({

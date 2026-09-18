@@ -356,6 +356,98 @@ const wordTranslations: Record<string, string> = {
   no: 'नहीं', data: 'जानकारी', found: 'मिला', results: 'परिणाम',
 };
 
+
+/* Extended offline UI vocabulary. Keep this list focused on interface/system
+ * words so customer, product, supplier and business-entered data are not
+ * intentionally translated. */
+const extendedWordTranslations: Record<string, string> = {
+  home:'होम', menu:'मेन्यू', navigation:'नेविगेशन', page:'पृष्ठ', pages:'पृष्ठ',
+  section:'अनुभाग', sections:'अनुभाग', card:'कार्ड', table:'तालिका', row:'पंक्ति',
+  column:'कॉलम', columns:'कॉलम', field:'फ़ील्ड', fields:'फ़ील्ड', form:'फ़ॉर्म',
+  modal:'विंडो', dialog:'संवाद', details:'विवरण', information:'जानकारी',
+  overview:'सारांश', summary:'सारांश', dashboard:'डैशबोर्ड', widget:'विजेट',
+  chart:'चार्ट', charts:'चार्ट', graph:'ग्राफ़', trend:'रुझान', trends:'रुझान',
+  monthly:'मासिक', daily:'दैनिक', weekly:'साप्ताहिक', yearly:'वार्षिक',
+  month:'महीना', months:'महीने', week:'सप्ताह', weeks:'सप्ताह', year:'वर्ष',
+  day:'दिन', days:'दिन', hour:'घंटा', hours:'घंटे', minute:'मिनट', minutes:'मिनट',
+  second:'सेकंड', seconds:'सेकंड',
+  amount:'राशि', amounts:'राशियाँ', value:'मान', values:'मान', total:'कुल',
+  average:'औसत', count:'गिनती', number:'संख्या', numbers:'संख्याएँ',
+  record:'रिकॉर्ड', records:'रिकॉर्ड', entry:'प्रविष्टि', entries:'प्रविष्टियाँ',
+  list:'सूची', lists:'सूचियाँ', result:'परिणाम', results:'परिणाम',
+  status:'स्थिति', pending:'लंबित', completed:'पूर्ण', complete:'पूर्ण',
+  processing:'प्रक्रिया में', processed:'प्रक्रिया पूर्ण', success:'सफलता',
+  failed:'विफल', failure:'विफलता', warning:'चेतावनी', info:'जानकारी',
+  error:'त्रुटि', errors:'त्रुटियाँ', message:'संदेश', messages:'संदेश',
+  notification:'सूचना', notifications:'सूचनाएँ', alert:'चेतावनी',
+  required:'आवश्यक', optional:'वैकल्पिक', available:'उपलब्ध', unavailable:'अनुपलब्ध',
+  enabled:'सक्षम', disabled:'अक्षम', enable:'सक्षम करें', disable:'अक्षम करें',
+  active:'सक्रिय', inactive:'निष्क्रिय', default:'डिफ़ॉल्ट', selected:'चयनित',
+  select:'चुनें', choose:'चुनें', selected:'चयनित', enter:'दर्ज करें', type:'प्रकार',
+  input:'इनपुट', output:'आउटपुट', submit:'जमा करें', apply:'लागू करें',
+  applied:'लागू', reset:'रीसेट करें', retry:'फिर से प्रयास करें', reload:'पुनः लोड करें',
+  loading:'लोड हो रहा है', loaded:'लोड हो गया', wait:'प्रतीक्षा करें', please:'कृपया',
+  continue:'जारी रखें', confirm:'पुष्टि करें', confirmation:'पुष्टि',
+  yes:'हाँ', no:'नहीं', ok:'ठीक है', okay:'ठीक है', done:'पूर्ण', finish:'समाप्त करें',
+  start:'शुरू करें', stop:'रोकें', open:'खोलें', close:'बंद करें', back:'वापस',
+  next:'आगे', previous:'पिछला', first:'पहला', last:'अंतिम', more:'और', less:'कम',
+  show:'दिखाएँ', hide:'छिपाएँ', expand:'खोलें', collapse:'समेटें',
+  add:'जोड़ें', create:'बनाएँ', new:'नया', save:'सहेजें', saving:'सहेजा जा रहा है',
+  update:'संशोधित करें', updated:'संशोधित', edit:'संपादित करें', delete:'हटाएँ',
+  remove:'हटाएँ', cancel:'रद्द करें', clear:'साफ़ करें', reset:'रीसेट करें',
+  search:'खोजें', refresh:'ताज़ा करें', filter:'फ़िल्टर', filters:'फ़िल्टर',
+  export:'निर्यात करें', import:'आयात करें', print:'प्रिंट करें', download:'डाउनलोड करें',
+  upload:'अपलोड करें', share:'साझा करें', copy:'कॉपी करें', paste:'पेस्ट करें',
+  view:'देखें', preview:'पूर्वावलोकन', open:'खोलें', select:'चुनें',
+  dashboard:'डैशबोर्ड', invoice:'चालान', invoices:'चालान', billing:'बिलिंग',
+  bill:'बिल', bills:'बिल', product:'उत्पाद', products:'उत्पाद',
+  customer:'ग्राहक', customers:'ग्राहक', purchase:'खरीद', purchases:'खरीदारी',
+  supplier:'आपूर्तिकर्ता', stock:'भंडार', movement:'गतिविधि', movements:'गतिविधियाँ',
+  khatabook:'खाताबही', staff:'कर्मचारी', settings:'सेटिंग्स', setting:'सेटिंग',
+  finance:'वित्त', administration:'प्रशासन', inventory:'भंडार', business:'व्यवसाय',
+  account:'खाता', app:'ऐप', language:'भाषा', english:'अंग्रेज़ी', hindi:'हिन्दी',
+  owner:'मालिक', manager:'प्रबंधक', cashier:'कैशियर', helper:'सहायक',
+  employee:'कर्मचारी', employees:'कर्मचारी', member:'सदस्य', members:'सदस्य',
+  role:'भूमिका', roles:'भूमिकाएँ', permission:'अनुमति', permissions:'अनुमतियाँ',
+  password:'पासवर्ड', username:'उपयोगकर्ता नाम', user:'उपयोगकर्ता', users:'उपयोगकर्ता',
+  login:'लॉगिन', logout:'लॉग आउट', sign:'साइन', out:'आउट', welcome:'स्वागत',
+  forgot:'भूल गए', remember:'याद रखें', phone:'फ़ोन', mobile:'मोबाइल',
+  email:'ईमेल', address:'पता', name:'नाम', title:'शीर्षक', description:'विवरण',
+  note:'टिप्पणी', notes:'टिप्पणियाँ', date:'तारीख', time:'समय', today:'आज',
+  yesterday:'कल', tomorrow:'कल', now:'अभी', recent:'हाल का', latest:'नवीनतम',
+  current:'वर्तमान', previous:'पिछला', upcoming:'आगामी', history:'इतिहास',
+  transaction:'लेन-देन', transactions:'लेन-देन', activity:'गतिविधि', activities:'गतिविधियाँ',
+  report:'रिपोर्ट', reports:'रिपोर्ट', sales:'बिक्री', sale:'बिक्री', revenue:'आय',
+  income:'आय', expense:'खर्च', expenses:'खर्च', profit:'लाभ', loss:'हानि',
+  tax:'कर', discount:'छूट', price:'कीमत', quantity:'मात्रा', qty:'मात्रा',
+  unit:'इकाई', category:'श्रेणी', sku:'एसकेयू', amount:'राशि', subtotal:'उप-योग',
+  total:'कुल', payment:'भुगतान', payments:'भुगतान', paid:'जमा', unpaid:'अजमा',
+  due:'बकाया', dues:'बकाया', outstanding:'बकाया', balance:'शेष राशि',
+  cash:'नकद', credit:'उधार', online:'ऑनलाइन', upi:'यूपीआई', mode:'माध्यम',
+  collect:'लें', gave:'दिए', got:'मिले', give:'दें', get:'लें', cleared:'निपट गया',
+  details:'विवरण', purchase:'खरीद', wholesale:'थोक', retailer:'खुदरा', retail:'खुदरा',
+  currentstock:'वर्तमान भंडार', low:'कम', lowstock:'कम भंडार', alert:'चेतावनी',
+  opening:'प्रारंभिक', closing:'अंतिम', available:'उपलब्ध', unavailable:'अनुपलब्ध',
+  supplier:'आपूर्तिकर्ता', contact:'संपर्क', salary:'वेतन', monthly:'मासिक', joined:'शामिल हुए',
+  logo:'लोगो', image:'चित्र', file:'फ़ाइल', files:'फ़ाइलें', size:'आकार',
+  category:'श्रेणी', description:'विवरण', reason:'कारण', reference:'संदर्भ',
+  type:'प्रकार', internal:'आंतरिक', regular:'नियमित', festival:'त्योहार', order:'ऑर्डर',
+  item:'वस्तु', items:'वस्तुएँ', flat:'निश्चित', percentage:'प्रतिशत',
+  all:'सभी', partial:'आंशिक', draft:'प्रारूप', live:'लाइव', data:'जानकारी',
+  found:'मिला', searchresults:'खोज परिणाम', help:'सहायता', support:'सहायता',
+  businessname:'व्यवसाय का नाम', ownername:'मालिक का नाम', customername:'ग्राहक का नाम',
+  customerphone:'ग्राहक का फ़ोन', customeraddress:'ग्राहक का पता',
+  productname:'उत्पाद का नाम', productdetails:'उत्पाद विवरण', billingdetails:'बिलिंग विवरण',
+  paymentmode:'भुगतान का माध्यम', paymentdetails:'भुगतान विवरण', invoicenumber:'चालान संख्या',
+  invoicedate:'चालान की तारीख', invoiceid:'चालान आईडी', currentstock:'वर्तमान भंडार',
+  lowstockalert:'कम भंडार चेतावनी', purchaseprice:'खरीद मूल्य', wholesaleprice:'थोक मूल्य',
+  retailerprice:'खुदरा मूल्य', purchasedate:'खरीद की तारीख', purchasedetails:'खरीद विवरण',
+  totalcustomers:'कुल ग्राहक', totalstaff:'कुल कर्मचारी', totalpurchases:'कुल खरीदारी',
+  paymenthistory:'भुगतान इतिहास', transactionhistory:'लेन-देन इतिहास',
+  collectpayment:'भुगतान लें', confirmpayment:'भुगतान की पुष्टि करें',
+  creditentry:'उधार प्रविष्टि', paymententry:'भुगतान प्रविष्टि',
+};
+
 function translateText(value: string, language: AppLanguage): string {
   if (language === 'en') return value;
 
@@ -394,7 +486,7 @@ function translateText(value: string, language: AppLanguage): string {
 
   // Translate UI words inside longer strings. Unknown words are preserved.
   return trimmed.replace(/\\b[A-Za-z][A-Za-z0-9'’&/-]*\\b/g, (word) => {
-    return wordTranslations[word.toLowerCase()] ?? word;
+    return extendedWordTranslations[word.toLowerCase()] ?? wordTranslations[word.toLowerCase()] ?? word;
   });
 }
 

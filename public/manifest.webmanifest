@@ -1,1 +1,22 @@
-{"name":"Billing Hub — Billing & Stock Management","short_name":"Billing Hub","description":"Billing, stock, customers, purchases and business management.","start_url":"/","scope":"/","display":"standalone","background_color":"#fafaf9","theme_color":"#92400e","orientation":"portrait-primary","icons":[{"src":"/favicon.ico","sizes":"any","type":"image/x-icon","purpose":"any maskable"}]}
+{
+  "id": "/",
+  "name": "Billing Hub — Billing & Stock Management",
+  "short_name": "Billing Hub",
+  "description": "Billing, stock, customers, purchases and business management.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#fafaf9",
+  "theme_color": "#92400e",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon",
+      "purpose": "any maskable"
+    }
+  ]
+}

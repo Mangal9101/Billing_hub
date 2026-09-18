@@ -46,7 +46,7 @@ export default function InvoiceBillingScreen() {
     const sameName = data.customers.filter(
       (c) => c.name.trim().toLowerCase() === (inv.customer || '').trim().toLowerCase()
     );
-    const customer = linked || (sameName.length === 1 ? sameName[0] : undefined);
+    const customer = linked || sameName[0];
 
     return customer
       ? {

@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
 
     const businessId = String(context.membership.business_id);
     const r = await supabaseAdmin(
-      `business_data?business_id=eq.${encodeURIComponent(businessId)}&select=payload,updated_at&limit=1`
+      `business_data?business_id=eq.${encodeURIComponent(businessId)}&select=payload,updated_at&order=updated_at.desc&limit=1`
     );
 
     if (!r.ok) {
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     const permissions = context.permissions as Permission[];
 
     const oldR = await supabaseAdmin(
-      `business_data?business_id=eq.${encodeURIComponent(businessId)}&select=payload&limit=1`
+      `business_data?business_id=eq.${encodeURIComponent(businessId)}&select=payload&order=updated_at.desc&limit=1`
     );
     if (!oldR.ok) return NextResponse.json({ error: await oldR.text() }, { status: 500 });
     const oldRows = await oldR.json();
@@ -211,15 +211,35 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const save = await supabaseAdmin('business_data', {
-      method: 'POST',
-      headers: { Prefer: 'resolution=merge-duplicates' },
-      body: JSON.stringify({
-        business_id: businessId,
-        payload: incoming,
-        updated_at: new Date().toISOString(),
-      }),
-    });
+    const now = new Date().toISOString();
+
+    // Update the existing business row instead of inserting another snapshot.
+    // This prevents GET from alternating between old/new duplicate rows.
+    let save = await supabaseAdmin(
+      `business_data?business_id=eq.${encodeURIComponent(businessId)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          payload: incoming,
+          updated_at: now,
+        }),
+      }
+    );
+
+    if (save.ok) {
+      const patchedRows = await save.json().catch(() => []);
+      // If no row existed yet, create the first one.
+      if (!Array.isArray(patchedRows) || patchedRows.length === 0) {
+        save = await supabaseAdmin('business_data', {
+          method: 'POST',
+          body: JSON.stringify({
+            business_id: businessId,
+            payload: incoming,
+            updated_at: now,
+          }),
+        });
+      }
+    }
 
     if (!save.ok) {
       return NextResponse.json({ error: await save.text() }, { status: 500 });

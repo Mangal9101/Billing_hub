@@ -178,13 +178,31 @@ export default function Sidebar({
 
   const canSettings = !!session?.isOwner;
 
-  // Prefetch the Staff route so clicking the sidebar opens it without waiting
-  // for the page bundle to download after navigation.
+  // Prefetch both the Staff page bundle and its data while the sidebar is visible.
+  // This makes Staff open with the latest cached list instead of waiting on the API.
   useEffect(() => {
-    if (session?.isOwner && session?.permissions?.includes('staff_view')) {
-      router.prefetch('/staff');
-    }
-  }, [router, session?.isOwner, session?.permissions]);
+    if (!session?.isOwner || !session?.companyId || !session?.accessToken) return;
+
+    router.prefetch('/staff');
+
+    const key = 'billing_hub_staff_cache_' + session.companyId;
+    fetch('/api/staff?businessId=' + encodeURIComponent(session.companyId), {
+      headers: { Authorization: 'Bearer ' + session.accessToken },
+      cache: 'no-store',
+    })
+      .then(async (r) => {
+        if (!r.ok) return null;
+        const j = await r.json();
+        return Array.isArray(j.staff) ? j.staff : null;
+      })
+      .then((staff) => {
+        if (!staff) return;
+        try {
+          sessionStorage.setItem(key, JSON.stringify(staff));
+        } catch {}
+      })
+      .catch(() => {});
+  }, [router, session?.isOwner, session?.companyId, session?.accessToken]);
 
   const unreadCount = (
     category: 'invoice' | 'products' | 'khatabook'

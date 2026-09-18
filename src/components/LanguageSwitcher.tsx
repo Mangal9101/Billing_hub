@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Languages, Check } from 'lucide-react';
+import { Languages } from 'lucide-react';
 import { getLanguage, setLanguage, applyGoogleLanguage, type AppLanguage } from '@/lib/language';
 
 interface LanguageSwitcherProps {
@@ -10,16 +10,15 @@ interface LanguageSwitcherProps {
 }
 
 export default function LanguageSwitcher({ collapsed = false, mobile = false }: LanguageSwitcherProps) {
-  const [open, setOpen] = useState(false);
   const [language, setCurrentLanguage] = useState<AppLanguage>('en');
 
   useEffect(() => {
-    setCurrentLanguage(getLanguage());
-    document.documentElement.lang = getLanguage();
+    const current = getLanguage();
+    setCurrentLanguage(current);
+    document.documentElement.lang = current;
 
     const onLanguageChange = (event: Event) => {
-      const next = (event as CustomEvent<AppLanguage>).detail;
-      setCurrentLanguage(next);
+      setCurrentLanguage((event as CustomEvent<AppLanguage>).detail);
     };
 
     window.addEventListener('billing-hub-language-change', onLanguageChange);
@@ -30,8 +29,6 @@ export default function LanguageSwitcher({ collapsed = false, mobile = false }: 
     setCurrentLanguage(next);
     setLanguage(next);
 
-    // Google Translate can load a little after the app. Retry briefly so the
-    // choice works even on the first click after a fresh install.
     let attempts = 0;
     const timer = window.setInterval(() => {
       attempts += 1;
@@ -40,45 +37,38 @@ export default function LanguageSwitcher({ collapsed = false, mobile = false }: 
         window.clearInterval(timer);
       }
     }, 150);
-
-    setOpen(false);
   };
 
-  return (
-    <div className={mobile ? 'mt-1' : 'w-full'}>
+  if (collapsed && !mobile) {
+    return (
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground w-full transition-colors ${collapsed ? 'justify-center' : ''}`}
+        onClick={() => choose(language === 'en' ? 'hi' : 'en')}
+        className="w-full flex items-center justify-center px-2 py-2 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
+        title={language === 'hi' ? 'हिन्दी' : 'English'}
         aria-label="Language"
-        title="Language"
       >
         <Languages size={16} />
-        {!collapsed && <span className="flex-1 text-left">{language === 'hi' ? 'हिन्दी' : 'English'}</span>}
       </button>
+    );
+  }
 
-      {open && (
-        <div className="absolute bottom-full left-0 mb-2 w-36 rounded-xl border border-border bg-card p-1.5 shadow-xl z-[80]">
-          <p className="px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-            Language
-          </p>
+  return (
+    <div className="px-2 py-1.5 mb-1">
+      <div className="flex items-center gap-2 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <Languages size={13} />
+        <span>Language</span>
+      </div>
 
-          {([
-            ['en', 'English'],
-            ['hi', 'हिन्दी'],
-          ] as const).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => choose(value)}
-              className="w-full flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-left hover:bg-secondary"
-            >
-              <span className="flex-1">{label}</span>
-              {language === value && <Check size={15} className="text-primary" />}
-            </button>
-          ))}
-        </div>
-      )}
+      <select
+        value={language}
+        onChange={(e) => choose(e.target.value as AppLanguage)}
+        className="w-full h-9 rounded-lg border border-border bg-card px-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20"
+        aria-label="Language"
+      >
+        <option value="hi">हिन्दी</option>
+        <option value="en">English</option>
+      </select>
     </div>
   );
 }

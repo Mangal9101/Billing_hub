@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
 import {
   LayoutDashboard,
@@ -127,6 +128,7 @@ export default function Sidebar({
   const groups = ['main', 'inventory', 'finance', 'admin'];
 
   const { data, markActivityRead } = useAppStore();
+  const router = useRouter();
 
   const session = getSession();
 
@@ -175,6 +177,14 @@ export default function Sidebar({
     !!session?.permissions?.includes(permission);
 
   const canSettings = !!session?.isOwner;
+
+  // Prefetch the Staff route so clicking the sidebar opens it without waiting
+  // for the page bundle to download after navigation.
+  useEffect(() => {
+    if (session?.isOwner && session?.permissions?.includes('staff_view')) {
+      router.prefetch('/staff');
+    }
+  }, [router, session?.isOwner, session?.permissions]);
 
   const unreadCount = (
     category: 'invoice' | 'products' | 'khatabook'

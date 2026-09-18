@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 import {
   LayoutDashboard,
   FileText,
@@ -487,9 +486,6 @@ export default function Sidebar({
                 </span>
               )}
             </Link>
-            {group === 'admin' && item.href === '/staff' && (
-              <LanguageSwitcher collapsed={collapsed && !mobile} mobile={mobile} />
-            )}
             </React.Fragment>
           ))}
         </div>

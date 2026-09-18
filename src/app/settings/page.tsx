@@ -5,6 +5,7 @@ import AppLayout from '@/components/AppLayout';
 import { useAppStore } from '@/lib/store';
 import { getSession } from '@/lib/auth';
 import { toast } from 'sonner';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function SettingsPage() {
   const { data, ready, setBusiness } = useAppStore();
@@ -103,6 +104,14 @@ export default function SettingsPage() {
           <button className="btn-primary flex items-center justify-center gap-2" onClick={save} disabled={saving}>
             {saving ? 'Saving...' : 'Save Business Details'}
           </button>
+        </div>
+
+        <div className="card p-6 max-w-xl space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Language</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Choose English or Hindi. Hindi translation works locally without internet.</p>
+          </div>
+          <LanguageSwitcher />
         </div>
 
         <div className="card p-6 max-w-xl space-y-4">

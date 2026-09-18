@@ -38,18 +38,24 @@ export default function InvoiceBillingScreen() {
   // Old invoices retain their original billing data, but customer phone/name/address
   // should update everywhere when the customer master record is edited.
   const invoices = data.invoices.map((inv) => {
-    // Older invoices may not have customerId. Resolve them by the customer
-    // master name as a fallback so edited phone/address details are used too.
-    const customer =
-      (inv.customerId
-        ? data.customers.find((c) => c.id === inv.customerId)
-        : undefined) ||
-      data.customers
-        .filter((c) => c.name.trim().toLowerCase() === (inv.customer || '').trim().toLowerCase())
-        .sort((a, b) => b.lastVisit.localeCompare(a.lastVisit))[0];
+    // Always resolve the displayed customer from the current customer master.
+    // A customer edit must immediately update old invoice list records too.
+    const linked = inv.customerId
+      ? data.customers.find((c) => c.id === inv.customerId)
+      : undefined;
+    const sameName = data.customers.filter(
+      (c) => c.name.trim().toLowerCase() === (inv.customer || '').trim().toLowerCase()
+    );
+    const customer = linked || (sameName.length === 1 ? sameName[0] : undefined);
 
     return customer
-      ? { ...inv, customer: customer.name, phone: customer.phone || '', address: customer.address || '' }
+      ? {
+          ...inv,
+          customerId: customer.id,
+          customer: customer.name,
+          phone: customer.phone || '',
+          address: customer.address || '',
+        }
       : inv;
   });
   useEffect(() => { if (ready) markActivityRead('invoice'); }, [ready, markActivityRead]);

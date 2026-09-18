@@ -1068,19 +1068,70 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
         date:p.date || existing.date,
       };
 
-      return {
-        ...d,
-        purchases:d.purchases.map(x=>
-          x.id===id?updatedPurchase:x
-        )
-      };
+      // Keep product stock/price in sync with purchase edits.
+      let products=[...d.products];
+      let movements=[...d.movements];
+      const oldQtyByProduct=new Map<string,number>();
+      const newQtyByProduct=new Map<string,number>();
+      const newItemByProduct=new Map<string,PurchaseItem>();
+
+      for(const item of existing.items||[]){
+        const productId=item.productId || products.find(x=>x.name.trim().toLowerCase()===item.name.trim().toLowerCase())?.id;
+        if(productId) oldQtyByProduct.set(productId,(oldQtyByProduct.get(productId)||0)+Number(item.qty||0));
+      }
+      for(const item of updatedPurchase.items||[]){
+        const productId=item.productId || products.find(x=>x.name.trim().toLowerCase()===item.name.trim().toLowerCase())?.id;
+        if(productId){
+          newQtyByProduct.set(productId,(newQtyByProduct.get(productId)||0)+Number(item.qty||0));
+          newItemByProduct.set(productId,item);
+        }
+      }
+
+      // Apply quantity difference for products that existed in the purchase.
+      for(const [productId,oldQty] of oldQtyByProduct){
+        const product=products.find(x=>x.id===productId);
+        if(!product) continue;
+        const newQty=newQtyByProduct.get(productId)||0;
+        const delta=newQty-oldQty;
+        const newItem=newItemByProduct.get(productId);
+        const nextPrice=newItem && Number(newItem.unitPrice)>0 ? Number(newItem.unitPrice) : product.price;
+        products=products.map(x=>x.id===productId?{...x,stock:Math.max(0,x.stock+delta),price:nextPrice}:x);
+        if(delta!==0){
+          movements.push({id:'m-'+crypto.randomUUID(),productId,productName:product.name,type:delta>0?'IN':'OUT',qty:delta,reason:'Purchase edited '+id,date:today(),unit:product.unit,refId:id});
+        }
+      }
+
+      // Add newly introduced existing products or create new products.
+      for(const item of updatedPurchase.items||[]){
+        const name=(item.name||'').trim();
+        if(!name||Number(item.qty)<=0) continue;
+        const product=products.find(x=>x.name.trim().toLowerCase()===name.toLowerCase());
+        if(!product) {
+          const newProduct:Product={id:'p-'+crypto.randomUUID(),name,sku:'PUR-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,5).toUpperCase(),category:'',price:Number(item.unitPrice)||0,stock:Number(item.qty),unit:'piece',lowStockAlert:5};
+          products.push(newProduct);
+          movements.push({id:'m-'+crypto.randomUUID(),productId:newProduct.id,productName:newProduct.name,type:'IN',qty:newProduct.stock,reason:'Purchase edited '+id+' · New Product',date:today(),unit:newProduct.unit,refId:id});
+        } else if(!oldQtyByProduct.has(product.id)) {
+          const qty=Number(item.qty||0);
+          products=products.map(x=>x.id===product.id?{...x,stock:x.stock+qty,price:Number(item.unitPrice)>0?Number(item.unitPrice):x.price}:x);
+          movements.push({id:'m-'+crypto.randomUUID(),productId:product.id,productName:product.name,type:'IN',qty,reason:'Purchase edited '+id,date:today(),unit:product.unit,refId:id});
+        }
+      }
+
+      return pushActivity(
+        {...d,purchases:d.purchases.map(x=>x.id===id?updatedPurchase:x),products,movements},
+        'products',
+        'Purchase updated: '+id
+      );
     });
 
   const deletePurchase=(id:string)=>
-    setData(d=>({
-      ...d,
-      purchases:d.purchases.filter(x=>x.id!==id)
-    }));
+    setData(d=>
+      pushActivity(
+        {...d,purchases:d.purchases.filter(x=>x.id!==id)},
+        'products',
+        'Purchase deleted: '+id
+      )
+    );
 
   const value=useMemo(
     ()=>({

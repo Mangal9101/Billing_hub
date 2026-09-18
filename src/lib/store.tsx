@@ -234,7 +234,7 @@ async function remoteLoad(
   }
 }
 
-async function remoteSave(data: AppData, reason = 'Automatic backup before change') {
+async function remoteSave(data: AppData, reason = 'Automatic backup before change', clientUpdatedAt = Date.now()) {
   if (typeof window === 'undefined') return;
 
   const session = getSession();
@@ -256,7 +256,7 @@ async function remoteSave(data: AppData, reason = 'Automatic backup before chang
         },
         body: JSON.stringify({
           businessId,
-          payload: data,
+          payload: { ...data, _cloudUpdatedAt: clientUpdatedAt },
           reason,
           action: 'DATA_UPDATE',
           summary: 'Billing Hub data changed',
@@ -412,7 +412,7 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
     if(!cloudReady) return;
 
     const t=window.setTimeout(
-      ()=>void remoteSave(data),
+      ()=>void remoteSave(data, 'Automatic backup before change', Date.now()),
       150
     );
 

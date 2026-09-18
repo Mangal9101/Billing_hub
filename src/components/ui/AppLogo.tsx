@@ -5,11 +5,12 @@ import AppIcon from './AppIcon';
 import AppImage from './AppImage';
 
 interface AppLogoProps {
-  src?: string; // Image source (optional)
-  iconName?: string; // Icon name when no image
-  size?: number; // Size for icon/image
-  className?: string; // Additional classes
-  onClick?: () => void; // Click handler
+  src?: string;
+  iconName?: string;
+  size?: number;
+  className?: string;
+  onClick?: () => void;
+  showBrandName?: boolean;
 }
 
 const AppLogo = memo(function AppLogo({
@@ -18,22 +19,21 @@ const AppLogo = memo(function AppLogo({
   size = 64,
   className = '',
   onClick,
+  showBrandName = false,
 }: AppLogoProps) {
-  // Memoize className calculation
   const containerClassName = useMemo(() => {
-    const classes = ['flex items-center'];
-    if (onClick) classes.push('cursor-pointer hover:opacity-80 transition-opacity');
+    const classes = ['flex', 'flex-col', 'items-center'];
+    if (onClick) classes.push('cursor-pointer', 'hover:opacity-80', 'transition-opacity');
     if (className) classes.push(className);
     return classes.join(' ');
   }, [onClick, className]);
 
   return (
     <div className={containerClassName} onClick={onClick}>
-      {/* Show image if src provided, otherwise show icon */}
       {src ? (
         <AppImage
           src={src}
-          alt="Logo" 
+          alt="Billing Hub logo"
           width={size}
           height={size}
           className="flex-shrink-0"
@@ -42,6 +42,13 @@ const AppLogo = memo(function AppLogo({
         />
       ) : (
         <AppIcon name={iconName} size={size} className="flex-shrink-0" />
+      )}
+
+      {showBrandName && (
+        <>
+          <span className="font-bold text-xl leading-tight mt-2">Billing Hub</span>
+          <span className="text-sm font-medium opacity-70 mt-0.5">BILL. MANAGE. GROW.</span>
+        </>
       )}
     </div>
   );

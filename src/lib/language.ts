@@ -503,22 +503,22 @@ function translateText(value: string, language: AppLanguage): string {
 
   // Common dynamic labels.
   const dynamicRules: Array<[RegExp, string | ((...args: string[]) => string)]> = [
-    [/^(\\d+)\\s+customers?\\s*[·•-]\\s*₹(.+)\\s+outstanding$/i, '$1 ग्राहक · ₹$2 बकाया'],
-    [/^(\\d+)\\s+customers?$/i, '$1 ग्राहक'],
-    [/^(\\d+)\\s+products?$/i, '$1 उत्पाद'],
-    [/^(\\d+)\\s+staff$/i, '$1 कर्मचारी'],
-    [/^(\\d+)\\s+invoices?$/i, '$1 चालान'],
-    [/^(\\d+)\\s+bills?$/i, '$1 बिल'],
-    [/^(\\d+)\\s+items?$/i, '$1 वस्तुएँ'],
-    [/^(\\d+)\\s+item$/i, '$1 वस्तु'],
-    [/^Showing\\s+(\\d+)\\s+products?$/i, '$1 उत्पाद दिखाए जा रहे हैं'],
-    [/^Showing\\s+(\\d+)\\s+customers?$/i, '$1 ग्राहक दिखाए जा रहे हैं'],
-    [/^Search\\s+(.+)\\.\\.\\.$/i, 'खोजें $1...'],
-    [/^Last visit:\\s*(.+)$/i, 'अंतिम मुलाकात: $1'],
-    [/^Due\\s+₹(.+)$/i, 'बकाया ₹$1'],
-    [/^Today\\s*[—-]\\s*(.+?)\\s*·\\s*IST$/i, 'आज — $1 · IST'],
-    [/^Live\\s*·\\s*Updated now$/i, 'लाइव · अभी संशोधित हुआ'],
-    [/^(.+)\\s+customers?\\s*$/i, '$1 ग्राहक'],
+    [/^(\d+\s+customers?\s*[·•-]\s*₹(.+)\s+outstanding$/i, '$1 ग्राहक · ₹$2 बकाया'],
+    [/^(\d+\s+customers?$/i, '$1 ग्राहक'],
+    [/^(\d+\s+products?$/i, '$1 उत्पाद'],
+    [/^(\d+\s+staff$/i, '$1 कर्मचारी'],
+    [/^(\d+\s+invoices?$/i, '$1 चालान'],
+    [/^(\d+\s+bills?$/i, '$1 बिल'],
+    [/^(\d+\s+items?$/i, '$1 वस्तुएँ'],
+    [/^(\d+\s+item$/i, '$1 वस्तु'],
+    [/^Showing\s+(\\d+)\s+products?$/i, '$1 उत्पाद दिखाए जा रहे हैं'],
+    [/^Showing\s+(\\d+)\s+customers?$/i, '$1 ग्राहक दिखाए जा रहे हैं'],
+    [/^Search\s+(.+)\.\.\.$/i, 'खोजें $1...'],
+    [/^Last visit:\s*(.+)$/i, 'अंतिम मुलाकात: $1'],
+    [/^Due\s+₹(.+)$/i, 'बकाया ₹$1'],
+    [/^Today\s*[—-]\s*(.+?)\s*·\s*IST$/i, 'आज — $1 · IST'],
+    [/^Live\s*·\s*Updated now$/i, 'लाइव · अभी संशोधित हुआ'],
+    [/^(.+)\s+customers?\s*$/i, '$1 ग्राहक'],
   ];
 
   for (const [pattern, replacement] of dynamicRules) {
@@ -529,7 +529,7 @@ function translateText(value: string, language: AppLanguage): string {
   }
 
   // Translate UI words inside longer strings. Unknown words are preserved.
-  return trimmed.replace(/\\b[A-Za-z][A-Za-z0-9'’&/-]*\\b/g, (word) => {
+  return trimmed.replace(/\b[A-Za-z][A-Za-z0-9'’&/-]*\b/g, (word) => {
     return extendedWordTranslations[word.toLowerCase()] ?? wordTranslations[word.toLowerCase()] ?? word;
   });
 }

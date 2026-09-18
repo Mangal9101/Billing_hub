@@ -34,7 +34,15 @@ export default function InvoiceBillingScreen() {
   const [panelMode, setPanelMode] = useState<PanelMode>('list');
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRecord | null>(null);
   const { data, ready, markActivityRead } = useAppStore();
-  const invoices = data.invoices;
+  // Keep invoice history linked to the customer's current contact details.
+  // Old invoices retain their original billing data, but customer phone/name/address
+  // should update everywhere when the customer master record is edited.
+  const invoices = data.invoices.map((inv) => {
+    const customer = inv.customerId ? data.customers.find((c) => c.id === inv.customerId) : undefined;
+    return customer
+      ? { ...inv, customer: customer.name, phone: customer.phone || '', address: customer.address || '' }
+      : inv;
+  });
   useEffect(() => { if (ready) markActivityRead('invoice'); }, [ready, markActivityRead]);
   useEffect(() => {
     if (!ready) return;

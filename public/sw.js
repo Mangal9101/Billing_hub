@@ -1,5 +1,11 @@
-const CACHE_NAME = 'billing-hub-shell-v2';
-const APP_SHELL = ['/', '/manifest.webmanifest', '/favicon.ico'];
+const CACHE_NAME = 'billing-hub-shell-v3';
+const APP_SHELL = [
+  '/',
+  '/manifest.webmanifest',
+  '/favicon.ico',
+  '/assets/images/app_logo.png',
+  '/assets/images/billing_hub_brand.png'
+];
 
 self.addEventListener('install', event => {
   event.waitUntil(

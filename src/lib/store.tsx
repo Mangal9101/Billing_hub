@@ -24,6 +24,7 @@ const tokenKey = 'billing_hub_access_token_v4';
 // Serialize cloud writes so a slower older request can never overwrite a newer one.
 let remoteSaveQueue: Promise<void> = Promise.resolve();
 let latestCloudSaveVersion = 0;
+let loadGeneration = 0;
 
 function freshData(businessId?:string, ownerName?:string, ownerEmail?:string):AppData {
   return {
@@ -338,6 +339,7 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
       return;
     }
 
+    const thisLoad=++loadGeneration;
     setUserId(session.uid);
     setCloudReady(false);
 
@@ -366,15 +368,20 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
         : {}
     );
 
-    if(!session ||
+    if(thisLoad!==loadGeneration ||
+      !getSession() ||
       getSession()?.uid!==session.uid ||
       getSession()?.companyId!==session.companyId
     ) return;
 
     if (remote) {
-      // Prefer a valid cloud snapshot. If cloud has no payload, keep the
-      // already-loaded local snapshot instead of replacing it with empty data.
       setData(remote);
+      try {
+        localStorage.setItem(
+          storageKey(session.uid,session.companyId),
+          JSON.stringify(remote)
+        );
+      } catch {}
     }
 
     setCloudReady(true);

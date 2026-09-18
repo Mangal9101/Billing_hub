@@ -127,6 +127,14 @@ export async function POST(req: NextRequest) {
     const oldRows = await oldR.json();
     const old = oldRows?.[0]?.payload || null;
 
+    // Reject an older browser snapshot so multiple open tabs/components cannot
+    // make the data bounce between old/new values after refresh.
+    const incomingCloudUpdatedAt = Number(incoming?._cloudUpdatedAt || 0);
+    const storedCloudUpdatedAt = Number(old?._cloudUpdatedAt || 0);
+    if (old && incomingCloudUpdatedAt > 0 && storedCloudUpdatedAt > 0 && incomingCloudUpdatedAt < storedCloudUpdatedAt) {
+      return NextResponse.json({ ok: false, stale: true, error: 'Stale data snapshot ignored.' }, { status: 409 });
+    }
+
     // Never allow the browser to move the payload to another business.
     incoming.business = {
       ...(incoming.business || {}),

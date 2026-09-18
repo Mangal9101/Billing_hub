@@ -64,8 +64,14 @@ export default function GoogleTranslate() {
       <style jsx global>{`
         .goog-te-banner-frame,
         .goog-te-balloon-frame,
+        .goog-tooltip,
+        .goog-tooltip:hover,
+        body > .skiptranslate,
+        body > .skiptranslate iframe,
         .skiptranslate iframe {
           display: none !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
         }
 
         body {

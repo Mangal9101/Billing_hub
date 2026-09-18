@@ -196,27 +196,32 @@ export async function POST(req: NextRequest) {
     }
 
     if (old) {
-      await supabaseAdmin('business_backups', {
-        method: 'POST',
-        body: JSON.stringify({
-          business_id: businessId,
-          payload: old,
-          created_by: context.user.id,
-          reason: body.reason || 'Automatic backup before change',
+      // Backup and audit are independent writes. Run them concurrently so a
+      // normal save is not delayed by two sequential database round trips.
+      const [backup, audit] = await Promise.all([
+        supabaseAdmin('business_backups', {
+          method: 'POST',
+          body: JSON.stringify({
+            business_id: businessId,
+            payload: old,
+            created_by: context.user.id,
+            reason: body.reason || 'Automatic backup before change',
+          }),
         }),
-      });
-
-      await supabaseAdmin('audit_logs', {
-        method: 'POST',
-        body: JSON.stringify({
-          business_id: businessId,
-          actor_id: context.user.id,
-          action: body.action || 'DATA_UPDATE',
-          summary: body.summary || 'Business data changed',
-          before_payload: old,
-          after_payload: incoming,
+        supabaseAdmin('audit_logs', {
+          method: 'POST',
+          body: JSON.stringify({
+            business_id: businessId,
+            actor_id: context.user.id,
+            action: body.action || 'DATA_UPDATE',
+            summary: body.summary || 'Business data changed',
+            before_payload: old,
+            after_payload: incoming,
+          }),
         }),
-      });
+      ]);
+      if (!backup.ok) console.warn('Business backup failed:', await backup.text());
+      if (!audit.ok) console.warn('Audit log failed:', await audit.text());
     }
 
     const now = new Date().toISOString();

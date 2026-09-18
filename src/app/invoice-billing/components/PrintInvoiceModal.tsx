@@ -14,6 +14,12 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
   const printRef = useRef<HTMLDivElement>(null);
   const { data } = useAppStore();
 
+  // Use the latest customer record for WhatsApp/print contact details.
+  const currentCustomer = invoice.customerId ? data.customers.find((customer) => customer.id === invoice.customerId) : undefined;
+  const currentPhone = currentCustomer?.phone || invoice.phone || '';
+  const currentCustomerName = currentCustomer?.name || invoice.customer || 'Walk-in Customer';
+  const currentAddress = currentCustomer?.address || invoice.address || '';
+
   const handlePrint = () => {
     window.print();
   };
@@ -21,7 +27,7 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
   const handleWhatsApp = () => {
     // WhatsApp expects an international number without the leading +.
     // For Indian customers, convert a normal 10-digit mobile number to +91XXXXXXXXXX.
-    const rawPhone = (invoice.phone || '').trim();
+    const rawPhone = currentPhone.trim();
     const digits = rawPhone.replace(/\D/g, '');
     let cleanPhone = digits;
 
@@ -32,7 +38,7 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
     } else if (digits.length === 12 && digits.startsWith('91')) {
       cleanPhone = digits;
     }
-    const customer = invoice.customer || 'Walk-in Customer';
+    const customer = currentCustomerName;
     const lines = [
       `*${data.business.name || 'My Business'}*`,
       `Invoice: ${invoice.id}`,
@@ -111,8 +117,8 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Bill To</p>
                 <p className="font-semibold text-foreground">{invoice.customer || 'Walk-in Customer'}</p>
-                {invoice.phone && <p className="text-xs text-muted-foreground font-mono">{invoice.phone}</p>}
-                {invoice.address && <p className="text-xs text-muted-foreground">{invoice.address}</p>}
+                {currentPhone && <p className="text-xs text-muted-foreground font-mono">{currentPhone}</p>}
+                {currentAddress && <p className="text-xs text-muted-foreground">{currentAddress}</p>}
               </div>
               <div className="text-right">
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Invoice</p>

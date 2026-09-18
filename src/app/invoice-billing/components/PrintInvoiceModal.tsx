@@ -51,6 +51,8 @@ export default function PrintInvoiceModal({ invoice, onClose }: Props) {
       `Invoice: ${invoice.id}`,
       `Date: ${invoice.date} ${invoice.time || ''}`.trim(),
       `Customer: ${customer}`,
+      ...(currentPhone ? [`Mobile: ${currentPhone}`] : []),
+      ...(currentAddress ? [`Address: ${currentAddress}`] : []),
       '',
       ...invoice.items.map(
         (item, index) =>

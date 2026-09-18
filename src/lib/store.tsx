@@ -21,6 +21,10 @@ const EMPTY_BUSINESS = { name:'My Business', address:'', mobile:'', gstNumber:''
 const STORAGE_PREFIX = 'billing_hub_business_v4';
 const tokenKey = 'billing_hub_access_token_v4';
 
+// Serialize cloud writes so a slower older request can never overwrite a newer one.
+let remoteSaveQueue: Promise<void> = Promise.resolve();
+let latestCloudSaveVersion = 0;
+
 function freshData(businessId?:string, ownerName?:string, ownerEmail?:string):AppData {
   return {
     business:{
@@ -236,51 +240,60 @@ async function remoteSave(data: AppData, reason = 'Automatic backup before chang
   const businessId = session?.companyId;
   if (!businessId) return;
 
-  let token = await getValidAccessToken();
-  if (!token) return;
+  const version = ++latestCloudSaveVersion;
 
-  const save = (accessToken: string) =>
-    fetch('/api/data', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        businessId,
-        payload: data,
-        reason,
-        action: 'DATA_UPDATE',
-        summary: 'Billing Hub data changed',
-      }),
-    });
+  remoteSaveQueue = remoteSaveQueue.then(async () => {
+    let token = await getValidAccessToken();
+    if (!token) return;
 
-  try {
-    let r = await save(token);
+    const save = (accessToken: string) =>
+      fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          businessId,
+          payload: data,
+          reason,
+          action: 'DATA_UPDATE',
+          summary: 'Billing Hub data changed',
+        }),
+      });
 
-    if (r.status === 401) {
-      const freshToken = await refreshAccessToken();
-      if (!freshToken) return;
-      token = freshToken;
-      r = await save(token);
+    try {
+      let r = await save(token);
+
+      if (r.status === 401) {
+        const freshToken = await refreshAccessToken();
+        if (!freshToken) return;
+        token = freshToken;
+        r = await save(token);
+      }
+
+      if (!r.ok) {
+        console.warn('Cloud sync failed:', r.status);
+        return;
+      }
+
+      // Only sync the latest snapshot to Google Sheets.
+      if (version === latestCloudSaveVersion) {
+        void fetch('/api/sheets/sync', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ businessId, payload: data }),
+        }).catch(() => {});
+      }
+    } catch (error) {
+      console.warn('Cloud sync error:', error);
     }
+  });
 
-    if (!r.ok) {
-      console.warn('Cloud sync failed:', r.status);
-      return;
-    }
-
-    void fetch('/api/sheets/sync', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ businessId, payload: data }),
-    }).catch(() => {});
-  } catch (error) {
-    console.warn('Cloud sync error:', error);
-  }
+  await remoteSaveQueue;
 }
 
 interface Store {
@@ -358,7 +371,11 @@ export function AppStoreProvider({children}:{children:React.ReactNode}){
       getSession()?.companyId!==session.companyId
     ) return;
 
-    if(remote) setData(remote);
+    if (remote) {
+      // Prefer a valid cloud snapshot. If cloud has no payload, keep the
+      // already-loaded local snapshot instead of replacing it with empty data.
+      setData(remote);
+    }
 
     setCloudReady(true);
     setReady(true);

@@ -21,7 +21,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg text-xs font-medium text-green-700">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              Live · Updated now
+              Updated now
             </span>
           </div>
         </div>

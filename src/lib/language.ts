@@ -534,46 +534,47 @@ function translateText(value: string, language: AppLanguage): string {
   });
 }
 
+const originalTextNodes = new WeakMap<Text, string>();
+const originalAttributes = new WeakMap<Element, Map<string, string>>();
+
 function translateNode(node: Node, language: AppLanguage) {
   if (node.nodeType === Node.TEXT_NODE) {
-    const value = node.nodeValue ?? '';
-    const core = value.trim();
+    const textNode = node as Text;
+    const original = originalTextNodes.has(textNode)
+      ? originalTextNodes.get(textNode)!
+      : (originalTextNodes.set(textNode, textNode.nodeValue ?? ''), textNode.nodeValue ?? '');
+    const core = original.trim();
     if (!core) return;
-    const leading = value.slice(0, value.indexOf(core));
-    const trailing = value.slice(value.indexOf(core) + core.length);
-    const translated = translateText(core, language);
-    if (translated !== core) node.nodeValue = leading + translated + trailing;
+    const leading = original.slice(0, original.indexOf(core));
+    const trailing = original.slice(original.indexOf(core) + core.length);
+    const translated = language === 'en' ? core : translateText(core, language);
+    textNode.nodeValue = leading + translated + trailing;
     return;
   }
 
   if (node.nodeType !== Node.ELEMENT_NODE) return;
-
   const el = node as HTMLElement;
   if (el.closest('[data-no-local-translate="true"]')) return;
 
-  // Never rewrite values typed/stored inside form controls.
-  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-    for (const attr of ['placeholder', 'title', 'aria-label']) {
-      const current = el.getAttribute(attr);
-      if (current) {
-        const translated = translateText(current, language);
-        if (translated !== current) el.setAttribute(attr, translated);
-      }
-    }
-    return;
+  // Keep the original DOM attributes forever so repeated React renders and
+  // language switches always translate from English, never from Hindi.
+  let attrs = originalAttributes.get(el);
+  if (!attrs) {
+    attrs = new Map();
+    originalAttributes.set(el, attrs);
   }
-
   for (const attr of ['placeholder', 'title', 'aria-label']) {
     const current = el.getAttribute(attr);
-    if (current) {
-      const translated = translateText(current, language);
-      if (translated !== current) el.setAttribute(attr, translated);
+    if (current !== null && !attrs.has(attr)) attrs.set(attr, current);
+    const original = attrs.get(attr);
+    if (original !== undefined) {
+      el.setAttribute(attr, language === 'en' ? original : translateText(original, language));
     }
   }
 
-  if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
-    for (const child of Array.from(el.childNodes)) translateNode(child, language);
-  }
+  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
+  if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') return;
+  for (const child of Array.from(el.childNodes)) translateNode(child, language);
 }
 
 export function applyLocalLanguage(language: AppLanguage) {

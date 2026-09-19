@@ -8,7 +8,7 @@ function bearer(req: NextRequest) {
   return (req.headers.get('authorization') || '').replace(/^Bearer\\s+/i, '').trim();
 }
 
-async function ownerContext(req: NextRequest) {
+async function paymentContext(req: NextRequest) {
   const user = await supabaseAuthUser(bearer(req));
   if (!user?.id) return null;
   const membership = await verifyCompanyMembership(user.id);
@@ -38,8 +38,8 @@ async function saveSubscription(businessId: string, patch: Record<string, unknow
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await ownerContext(req);
-    if (!ctx) return NextResponse.json({ error: 'Owner access required.' }, { status: 403 });
+    const ctx = await paymentContext(req);
+    if (!ctx) return NextResponse.json({ error: 'Business access required.' }, { status: 403 });
     const body = await req.json().catch(() => ({}));
 
     if (body?.type === 'subscription') {

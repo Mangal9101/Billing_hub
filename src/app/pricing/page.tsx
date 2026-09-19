@@ -70,6 +70,18 @@ export default function PricingPage() {
         description: plans.find((p) => p.id === planId)?.description || 'Billing Hub plan',
         prefill: data.prefill,
         theme: { color: '#7b3f18' },
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: 'Pay via UPI',
+                instruments: [{ method: 'upi' }],
+              },
+            },
+            sequence: ['block.upi', 'card', 'netbanking'],
+            preferences: { show_default_blocks: true },
+          },
+        },
         handler: async (response: any) => {
           const verify = await fetch('/api/razorpay/verify', {
             method: 'POST',

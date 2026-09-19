@@ -53,6 +53,13 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     const check = async () => {
+      // Never keep the previous route's "allowed" state while a protected
+      // route is being verified. Without this reset, an unsubscribed user can
+      // briefly see the dashboard before the subscription check redirects.
+      if (!PUBLIC_PATHS.includes(pathname) && !pathname.startsWith('/_next')) {
+        setAllowed(false);
+      }
+
       if (PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/_next')) {
         const s = getSession();
         if (pathname === '/pricing') {

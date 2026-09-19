@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAuthUser, verifyCompanyMembership,  } from '@/lib/server-supabase';
+import { supabaseAuthUser, verifyCompanyMembership, getOwnerBusiness, supabaseAdmin } from '@/lib/server-supabase';
 import { RAZORPAY_KEY_ID, razorpayRequest } from '@/lib/razorpay';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,9 @@ export async function POST(req: NextRequest) {
     const user = await supabaseAuthUser(token);
     if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const membership = await verifyCompanyMembership(user.id);
-    if (!membership) return NextResponse.json({ error: 'Business access required.' }, { status: 403 });
+    const business = membership || await getOwnerBusiness(user.id);
+    if (!business) return NextResponse.json({ error: 'Business access required.' }, { status: 403 });
+    const businessId = String((business as any).business_id || (business as any).id);
 
     const body = await req.json().catch(() => ({}));
     if (body?.plan !== 'lifetime') return NextResponse.json({ error: 'Invalid one-time plan.' }, { status: 400 });
@@ -26,7 +28,7 @@ export async function POST(req: NextRequest) {
         currency: 'INR',
         receipt: `bh_lifetime_${Date.now()}`,
         notes: {
-          business_id: String(membership.business_id),
+          business_id: businessId,
           user_id: user.id,
           plan: 'lifetime',
           product: 'Billing Hub',

@@ -21,6 +21,7 @@ const plans = [
 
 export default function PricingPage() {
   const [loading, setLoading] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [status, setStatus] = useState<any>(null);
   const searchParams = useSearchParams();
   const showSignOut = searchParams.get('from') === 'login';
@@ -134,7 +135,7 @@ export default function PricingPage() {
           {plans.map((plan) => {
             const busy = loading === plan.id;
             return (
-              <div key={plan.id} className={`rounded-2xl border ${plan.id === 'monthly' ? 'border-primary shadow-lg' : 'border-border'} bg-card p-5 flex flex-col`}>
+              <div key={plan.id} onClick={() => setSelectedPlan(plan.id)} className={`rounded-2xl border ${selectedPlan === plan.id ? 'border-primary shadow-lg' : 'border-border'} bg-card p-5 flex flex-col cursor-pointer transition-colors`}>
                 {plan.id === 'monthly' && <div className="text-[10px] uppercase tracking-widest text-primary font-bold mb-3">Start here</div>}
                 <div className="flex items-center gap-2"><div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">{plan.id === 'lifetime' ? <Crown size={18}/> : <CreditCard size={18}/>}</div><div><h2 className="font-semibold text-foreground">{plan.name}</h2><p className="text-xs text-muted-foreground">{plan.description}</p></div></div>
                 <div className="mt-5"><span className="text-3xl font-bold text-foreground">{plan.price}</span><span className="text-xs text-muted-foreground">{plan.period}</span></div>

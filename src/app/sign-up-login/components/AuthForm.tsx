@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Loader2 } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
-import { getDeviceId, setSession } from '@/lib/auth';
+import { getDeviceId, getSession, isAdminAccount, setSession } from '@/lib/auth';
 
 type LoginFormData = { email: string; password: string; remember: boolean; };
 type SignupFormData = { name: string; phone: string; email: string; password: string; confirmPassword: string; };

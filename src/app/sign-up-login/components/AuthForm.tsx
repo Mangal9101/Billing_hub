@@ -205,7 +205,7 @@ export default function AuthForm() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/sign-up-login`,
+        redirectTo: 'https://billing-hub.in/sign-up-login',
         queryParams: { prompt: 'select_account' },
       },
     });

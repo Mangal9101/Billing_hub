@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
     const user = await supabaseAuthUser(bearer(req));
     if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const membership = await verifyCompanyMembership(user.id);
-    const business = membership || await getOwnerBusiness(user.id);
+  const ownedBusiness = await getOwnerBusiness(user.id);
+  const business = ownedBusiness || membership;
     if (!business) return NextResponse.json({ error: 'Business access required.' }, { status: 403 });
     const businessId = String((business as any).business_id || (business as any).id);
     const r = await supabaseAdmin(`business_data?business_id=eq.${encodeURIComponent(businessId)}&select=payload&limit=1`);

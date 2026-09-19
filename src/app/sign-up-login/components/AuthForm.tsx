@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Loader2 } from 'lucide-react';
 import AppLogo from '@/components/ui/AppLogo';
+import { createClient } from '@supabase/supabase-js';
 import { getDeviceId, getSession, isAdminAccount, setSession } from '@/lib/auth';
 
 type LoginFormData = { email: string; password: string; remember: boolean; };
@@ -198,23 +199,44 @@ export default function AuthForm() {
       return;
     }
     setGoogleLoading(true);
-    const redirectTo = `${window.location.origin}/sign-up-login`;
-    const url = `${supabaseUrl}/auth/v1/authorize?provider=google&response_type=token&redirect_to=${encodeURIComponent(redirectTo)}&prompt=select_account`;
-    window.location.assign(url);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+    });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/sign-up-login`,
+        queryParams: { prompt: 'select_account' },
+      },
+    });
+    if (error) {
+      setGoogleLoading(false);
+      toast.error(error.message || 'Google sign-in failed');
+    }
   };
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash.includes('access_token=')) return;
-    const params = new URLSearchParams(hash.replace(/^#/, ''));
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token') || undefined;
-    if (!accessToken) return;
-    window.history.replaceState({}, document.title, window.location.pathname);
-    setGoogleCallbackLoading(true);
-    void finishSession(accessToken, undefined, false, refreshToken)
-      .catch((e: any) => toast.error(e?.message || 'Google sign-in failed'))
-      .finally(() => setGoogleCallbackLoading(false));
+    const finishGoogleCallback = async () => {
+      if (!window.location.hash.includes('access_token=')) return;
+      setGoogleCallbackLoading(true);
+      try {
+        const supabase = createClient(supabaseUrl, supabaseKey, {
+          auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+        });
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        const session = data.session;
+        if (!session?.access_token) throw new Error('Google session was not returned. Please try again.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+        await finishSession(session.access_token, session.user?.email, false, session.refresh_token);
+      } catch (e: any) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        toast.error(e?.message || 'Google sign-in failed');
+      } finally {
+        setGoogleCallbackLoading(false);
+      }
+    };
+    void finishGoogleCallback();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

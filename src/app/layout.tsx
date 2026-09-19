@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, IBM_Plex_Mono } from 'next/font/google';
 import '../styles/tailwind.css';
@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   description: 'Billing Hub helps business owners create invoices, track stock, manage khata credit, and monitor daily sales from one dashboard.',
   manifest: '/manifest.webmanifest',
   icons: { icon: [{ url: '/favicon.ico', type: 'image/x-icon' }] },
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

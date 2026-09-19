@@ -55,6 +55,34 @@ function normalizePhone(value:string=''){ return value.replace(/\D/g,'').slice(-
 function today(){ return new Date().toLocaleDateString('en-GB'); }
 function time(){ return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}); }
 
+const CLOUD_DATA_VERSION = 2;
+
+function normalizeCloudSnapshot(
+  input:any,
+  identity:{businessId?:string; ownerName?:string; ownerEmail?:string}
+):AppData {
+  const base=freshData(identity.businessId,identity.ownerName,identity.ownerEmail);
+  return {
+    ...base,
+    ...input,
+    business:{
+      ...base.business,
+      ...(input?.business || {}),
+      id:identity.businessId || input?.business?.id || base.business.id,
+      ...(identity.ownerName ? {ownerName: input?.business?.ownerName || identity.ownerName} : {}),
+      ...(identity.ownerEmail ? {ownerEmail: input?.business?.ownerEmail || identity.ownerEmail} : {}),
+    },
+    products:Array.isArray(input?.products)?input.products:[],
+    customers:Array.isArray(input?.customers)?input.customers:[],
+    invoices:Array.isArray(input?.invoices)?input.invoices:[],
+    ledger:Array.isArray(input?.ledger)?input.ledger:[],
+    purchases:Array.isArray(input?.purchases)?input.purchases:[],
+    movements:Array.isArray(input?.movements)?input.movements:[],
+    notifications:Array.isArray(input?.notifications)?input.notifications:[],
+    activity:{...base.activity,...(input?.activity || {})},
+  };
+}
+
 function repairData(input:any, identity?:{businessId?:string; ownerName?:string; ownerEmail?:string}):AppData {
   const base=freshData(identity?.businessId,identity?.ownerName,identity?.ownerEmail);
   const d:AppData={
@@ -270,11 +298,21 @@ async function remoteLoad(
     const json = await r.json();
     if (!json.payload) return null;
 
-    return repairData(json.payload, {
+    const identityData = {
       businessId,
       ownerName: identity.ownerName,
       ownerEmail: identity.ownerEmail,
-    });
+    };
+
+    // New cloud snapshots are already normalized. Avoid the expensive
+    // invoice/customer/ledger reconciliation on every login. Legacy snapshots
+    // are repaired once and then become versioned on the next save.
+    return Number(json.payload?._billingHubDataVersion || 0) >= CLOUD_DATA_VERSION
+      ? normalizeCloudSnapshot(json.payload, identityData)
+      : {
+          ...repairData(json.payload, identityData),
+          _billingHubDataVersion: CLOUD_DATA_VERSION,
+        } as AppData;
   } catch {
     return null;
   }
@@ -307,7 +345,11 @@ async function remoteSave(data: AppData, reason = 'Automatic backup before chang
             },
             body: JSON.stringify({
               businessId,
-              payload: { ...job.data, _cloudUpdatedAt: job.clientUpdatedAt },
+              payload: {
+                ...job.data,
+                _billingHubDataVersion: CLOUD_DATA_VERSION,
+                _cloudUpdatedAt: job.clientUpdatedAt,
+              },
               reason: job.reason,
               action: 'DATA_UPDATE',
               summary: 'Billing Hub data changed',

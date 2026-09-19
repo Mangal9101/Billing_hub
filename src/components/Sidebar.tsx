@@ -160,6 +160,16 @@ export default function Sidebar({
       if (!s?.accessToken) return;
 
       try {
+        const cacheKey = 'billing_hub_businesses_cache_v1:' + s.uid;
+        const cachedRaw = sessionStorage.getItem(cacheKey);
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw);
+          if (Array.isArray(cached?.businesses) && Date.now() - Number(cached.cachedAt || 0) < 60_000) {
+            if (active) setBusinesses(cached.businesses);
+            return;
+          }
+        }
+
         const r = await fetch('/api/businesses', {
           headers: {
             Authorization: `Bearer ${s.accessToken}`,
@@ -170,9 +180,11 @@ export default function Sidebar({
         const j = await r.json();
 
         if (active && r.ok) {
-          setBusinesses(
-            Array.isArray(j.businesses) ? j.businesses : []
-          );
+          const list = Array.isArray(j.businesses) ? j.businesses : [];
+          setBusinesses(list);
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({ businesses: list, cachedAt: Date.now() }));
+          } catch {}
         }
       } catch {}
     };
@@ -202,6 +214,12 @@ export default function Sidebar({
     router.prefetch('/staff');
 
     const key = 'billing_hub_staff_cache_' + session.companyId;
+    try {
+      const raw = sessionStorage.getItem(key);
+      const cached = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(cached?.staff) && Date.now() - Number(cached.cachedAt || 0) < 60_000) return;
+    } catch {}
+
     fetch('/api/staff?businessId=' + encodeURIComponent(session.companyId), {
       headers: { Authorization: 'Bearer ' + session.accessToken },
       cache: 'no-store',
@@ -214,7 +232,7 @@ export default function Sidebar({
       .then((staff) => {
         if (!staff) return;
         try {
-          sessionStorage.setItem(key, JSON.stringify(staff));
+          sessionStorage.setItem(key, JSON.stringify({ staff, cachedAt: Date.now() }));
         } catch {}
       })
       .catch(() => {});

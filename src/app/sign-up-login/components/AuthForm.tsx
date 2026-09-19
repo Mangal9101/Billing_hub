@@ -21,7 +21,9 @@ export default function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [staffLoading, setStaffLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleCallbackLoading, setGoogleCallbackLoading] = useState(\n    typeof window !== 'undefined' && window.location.hash.includes('access_token=')\n  );
+  const [googleCallbackLoading, setGoogleCallbackLoading] = useState(
+    typeof window !== 'undefined' && window.location.hash.includes('access_token=')
+  );
   const [otpSent, setOtpSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [otpSending, setOtpSending] = useState(false);

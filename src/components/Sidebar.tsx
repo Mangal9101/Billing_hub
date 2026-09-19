@@ -141,10 +141,8 @@ export default function Sidebar({
 
   // Clear the local auth state first, then hard-navigate. This avoids waiting
   // for owner-only store/subscription listeners during the sign-out transition.
-  const handleSignOut = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
+  const handleSignOut = () => {
     clearSession();
-    window.location.replace('/sign-up-login');
   };
 
   const [businesses, setBusinesses] = useState<BusinessOption[]>([]);
@@ -600,9 +598,7 @@ export default function Sidebar({
             </div>
           )}
 
-          <Link
-            href="/sign-up-login"
-            onClick={handleSignOut}
+          <a href="/sign-up-login" onClick={handleSignOut}
             className={`flex items-center gap-2.5 px-2 py-2 rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors group relative ${
               collapsed ? 'justify-center' : ''
             }`}
@@ -613,7 +609,7 @@ export default function Sidebar({
             {!collapsed && (
               <span className="text-sm">Sign Out</span>
             )}
-          </Link>
+          </a>
 
           <button
             onClick={onToggleCollapse}
@@ -699,14 +695,12 @@ export default function Sidebar({
             </div>
           </div>
 
-          <Link
-            href="/sign-up-login"
-            onClick={handleSignOut}
+          <a href="/sign-up-login" onClick={handleSignOut}
             className="flex items-center gap-2 px-2 py-2 rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600"
           >
             <LogOut size={16} />
             <span className="text-sm">Sign Out</span>
-          </Link>
+          </a>
         </div>
       </aside>
     </>

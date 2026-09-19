@@ -12,20 +12,15 @@ async function context(req: NextRequest) {
   const token = bearer(req);
   const user = await supabaseAuthUser(token);
   if (!user?.id) return null;
-  const membership = await verifyCompanyMembership(user.id);
-  const ownedBusiness = await getOwnerBusiness(user.id);
-  const business = ownedBusiness || membership;
-  const businessId = business
-    ? businessId
-    : getOwnerBusinessId(user.id);
-  
-  return { user, businessId };
+  // Payment initiation only needs an authenticated account. The business is
+  // deterministic for the owner, so do not block checkout on membership rows.
+  return { user, businessId: getOwnerBusinessId(String(user.id)) };
 }
 
 export async function POST(req: NextRequest) {
   try {
     const ctx = await context(req);
-    if (!ctx) return NextResponse.json({ error: 'Business access required.' }, { status: 403 });
+    if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
     const plan = String(body?.plan || 'monthly');

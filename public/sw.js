@@ -1,4 +1,4 @@
-const CACHE_NAME = 'billing-hub-shell-v4';
+const CACHE_NAME = 'billing-hub-shell-v5';
 const APP_SHELL = [
   '/',
   '/manifest.webmanifest',
@@ -40,8 +40,10 @@ self.addEventListener('fetch', event => {
       .then(response => {
         if (
           response.ok &&
-          (event.request.mode === 'navigate' ||
-            url.pathname.startsWith('/_next/static/'))
+          // Never cache HTML navigations. OAuth callbacks must always
+          // receive the current callback page/script instead of an older
+          // cached login page.
+          url.pathname.startsWith('/_next/static/')
         ) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));

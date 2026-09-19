@@ -1,7 +1,6 @@
-const CACHE_NAME = 'billing-hub-shell-v5';
+const CACHE_NAME = 'billing-hub-shell-v6';
 const APP_SHELL = [
   '/',
-  '/manifest.webmanifest',
   '/favicon.ico',
   '/assets/images/app_logo.png',
   '/assets/images/billing_hub_brand.png'
@@ -35,14 +34,21 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
+  // Always fetch the manifest from the network so Chrome can detect
+  // standalone/fullscreen PWA configuration updates.
+  if (url.pathname === '/manifest.webmanifest') {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then(response => {
         if (
           response.ok &&
-          // Never cache HTML navigations. OAuth callbacks must always
-          // receive the current callback page/script instead of an older
-          // cached login page.
           url.pathname.startsWith('/_next/static/')
         ) {
           const copy = response.clone();

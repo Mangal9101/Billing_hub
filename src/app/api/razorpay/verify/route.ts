@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAuthUser, verifyCompanyMembership, , supabaseAdmin } from '@/lib/server-supabase';
+import { supabaseAuthUser, verifyCompanyMembership, supabaseAdmin } from '@/lib/server-supabase';
 import { verifyCheckoutSignature } from '@/lib/razorpay';
 
 export const dynamic = 'force-dynamic';

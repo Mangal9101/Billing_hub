@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAuthUser, verifyCompanyMembership, verifyBusinessOwner } from '@/lib/server-supabase';
+import { supabaseAuthUser, verifyCompanyMembership,  } from '@/lib/server-supabase';
 import { RAZORPAY_KEY_ID, razorpayRequest } from '@/lib/razorpay';
 
 export const dynamic = 'force-dynamic';
@@ -14,9 +14,7 @@ export async function POST(req: NextRequest) {
     const user = await supabaseAuthUser(token);
     if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const membership = await verifyCompanyMembership(user.id);
-    if (!membership || String(membership.role || '').toLowerCase() !== 'owner') {
-      return NextResponse.json({ error: 'Owner access required.' }, { status: 403 });
-    }
+    if (!membership) return NextResponse.json({ error: 'Business access required.' }, { status: 403 });
 
     const body = await req.json().catch(() => ({}));
     if (body?.plan !== 'lifetime') return NextResponse.json({ error: 'Invalid one-time plan.' }, { status: 400 });

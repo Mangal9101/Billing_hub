@@ -14,6 +14,7 @@ import {
   UserCog,
   BookOpen,
   Settings,
+  CreditCard,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -90,6 +91,12 @@ const navItems: NavItem[] = [
     label: 'Settings',
     href: '/settings',
     icon: <Settings size={18} />,
+    group: 'admin',
+  },
+  {
+    label: 'Plans & Billing',
+    href: '/pricing',
+    icon: <CreditCard size={18} />,
     group: 'admin',
   },
 ];
@@ -177,6 +184,7 @@ export default function Sidebar({
     !!session?.permissions?.includes(permission);
 
   const canSettings = !!session?.isOwner;
+  const canPlans = !!session?.isOwner;
 
   // Prefetch both the Staff page bundle and its data while the sidebar is visible.
   // This makes Staff open with the latest cached list instead of waiting on the API.
@@ -380,6 +388,10 @@ export default function Sidebar({
 
         if (item.href === '/settings') {
           return canSettings;
+        }
+
+        if (item.href === '/pricing') {
+          return canPlans;
         }
 
         if (item.href === '/staff') {

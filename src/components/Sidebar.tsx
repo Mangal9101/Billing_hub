@@ -139,6 +139,14 @@ export default function Sidebar({
 
   const session = getSession();
 
+  // Clear the local auth state first, then hard-navigate. This avoids waiting
+  // for owner-only store/subscription listeners during the sign-out transition.
+  const handleSignOut = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    clearSession();
+    window.location.replace('/sign-up-login');
+  };
+
   const [businesses, setBusinesses] = useState<BusinessOption[]>([]);
   const [switchOpen, setSwitchOpen] = useState(false);
   const [switchLoading, setSwitchLoading] = useState(false);
@@ -573,7 +581,7 @@ export default function Sidebar({
 
           <Link
             href="/sign-up-login"
-            onClick={() => clearSession()}
+            onClick={handleSignOut}
             className={`flex items-center gap-2.5 px-2 py-2 rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors group relative ${
               collapsed ? 'justify-center' : ''
             }`}

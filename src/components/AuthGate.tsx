@@ -62,7 +62,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         });
         const json = await response.json().catch(() => ({}));
         if (!response.ok || !isSubscriptionActive(json?.subscription)) {
-          router.replace('/pricing');
+          router.replace('/pricing?from=login');
           return;
         }
       } catch {

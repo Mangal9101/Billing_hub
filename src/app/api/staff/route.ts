@@ -24,6 +24,13 @@ async function ownerContext(req: NextRequest, bodyBusinessId?: string) {
 export async function GET(req: NextRequest) {
   try {
     const { membership } = await ownerContext(req);
+    const checkLoginId = String(new URL(req.url).searchParams.get('checkLoginId') || '').trim().toLowerCase();
+    if (checkLoginId) {
+      const duplicate = await supabaseAdmin(`staff_profiles?login_id=eq.${encodeURIComponent(checkLoginId)}&select=id&limit=1`);
+      if (!duplicate.ok) return NextResponse.json({ error: await duplicate.text() }, { status: 500 });
+      const rows = await duplicate.json();
+      return NextResponse.json({ available: !Array.isArray(rows) || rows.length === 0 });
+    }
     const r = await supabaseAdmin(`staff_profiles?business_id=eq.${encodeURIComponent(membership.business_id)}&select=id,user_id,name,phone,email,role,salary,join_date,status,login_id,permissions,created_at&order=created_at.asc`);
     if (!r.ok) return NextResponse.json({ error: await r.text() }, { status: 500 });
     const staff = await r.json();

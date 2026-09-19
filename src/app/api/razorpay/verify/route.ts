@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAuthUser, verifyCompanyMembership, supabaseAdmin } from '@/lib/server-supabase';
+import { supabaseAuthUser, verifyCompanyMembership, verifyBusinessOwner, supabaseAdmin } from '@/lib/server-supabase';
 import { verifyCheckoutSignature } from '@/lib/razorpay';
 
 export const dynamic = 'force-dynamic';
@@ -12,8 +12,11 @@ async function ownerContext(req: NextRequest) {
   const user = await supabaseAuthUser(bearer(req));
   if (!user?.id) return null;
   const membership = await verifyCompanyMembership(user.id);
-  if (!membership || String(membership.role || '').toLowerCase() !== 'owner') return null;
-  return { user, businessId: String(membership.business_id) };
+  if (!membership) return null;
+  const businessId = String(membership.business_id);
+  const isOwner = String(membership.role || '').toLowerCase() === 'owner' || await verifyBusinessOwner(user.id, businessId);
+  if (!isOwner) return null;
+  return { user, businessId };
 }
 
 async function saveSubscription(businessId: string, patch: Record<string, unknown>) {

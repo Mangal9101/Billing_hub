@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, supabaseAuthUser, verifyCompanyMembership,  } from '@/lib/server-supabase';
+import { supabaseAdmin, supabaseAuthUser, verifyCompanyMembership, getOwnerBusiness } from '@/lib/server-supabase';
 import { RAZORPAY_KEY_ID, RAZORPAY_PLAN_IDS, razorpayRequest } from '@/lib/razorpay';
 
 export const dynamic = 'force-dynamic';
@@ -13,8 +13,9 @@ async function context(req: NextRequest) {
   const user = await supabaseAuthUser(token);
   if (!user?.id) return null;
   const membership = await verifyCompanyMembership(user.id);
-  if (!membership) return null;
-  const businessId = String(membership.business_id);
+  const business = membership || await getOwnerBusiness(user.id);
+  if (!business) return null;
+  const businessId = String((business as any).business_id || (business as any).id);
   
   return { user, businessId };
 }

@@ -29,34 +29,58 @@ export async function GET(req: NextRequest) {
 
     const businessId = String(membership.business_id);
 
-    // Owner lookup and subscription data are independent; fetch them together.
-    const [owner, dataResponse] = await Promise.all([
-      supabaseAdmin(
-        `businesses?id=eq.${encodeURIComponent(businessId)}&select=owner_id&limit=1`
-      ),
-      supabaseAdmin(
-        `business_data?business_id=eq.${encodeURIComponent(businessId)}&select=payload&limit=1`
-      ),
-    ]);
-
-    let ownerId = '';
-    if (owner.ok) {
-      const ownerRows = await owner.json().catch(() => []);
-      ownerId = String(ownerRows?.[0]?.owner_id || '');
+    // The admin owner is known directly from the authenticated user. This
+    // avoids an extra businesses query + Auth Admin API call for the normal
+    // owner login path.
+    if (String(user.email || '').trim().toLowerCase() === ADMIN_EMAIL) {
+      return NextResponse.json({
+        subscription: { plan: 'lifetime', status: 'active', lifetime: true },
+        businessId,
+        active: true,
+      });
     }
 
-    if (ownerId) {
-      const ownerAuth = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(ownerId)}`, {
-        headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || '', Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ''}` },
-        cache: 'no-store',
-      });
-      const ownerJson = await ownerAuth.json().catch(() => ({}));
-      if (String(ownerJson?.email || '').trim().toLowerCase() === ADMIN_EMAIL) {
-        return NextResponse.json({ subscription: { plan: 'lifetime', status: 'active', lifetime: true }, businessId, active: true });
+    // Staff accounts still need to resolve the business owner because their
+    // own email is not the owner email.
+    const role = String((membership as any)?.role || '').toLowerCase();
+    const dataResponse = await supabaseAdmin(
+      'business_data?business_id=eq.' + encodeURIComponent(businessId) + '&select=payload&limit=1'
+    );
+
+    if (role !== 'owner') {
+      const owner = await supabaseAdmin(
+        'businesses?id=eq.' + encodeURIComponent(businessId) + '&select=owner_id&limit=1'
+      );
+      let ownerId = '';
+      if (owner.ok) {
+        const ownerRows = await owner.json().catch(() => []);
+        ownerId = String(ownerRows?.[0]?.owner_id || '');
+      }
+
+      if (ownerId) {
+        const ownerAuth = await fetch(
+          process.env.NEXT_PUBLIC_SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(ownerId),
+          {
+            headers: {
+              apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+              Authorization: 'Bearer ' + (process.env.SUPABASE_SERVICE_ROLE_KEY || ''),
+            },
+            cache: 'no-store',
+          }
+        );
+        const ownerJson = await ownerAuth.json().catch(() => ({}));
+        if (String(ownerJson?.email || '').trim().toLowerCase() === ADMIN_EMAIL) {
+          return NextResponse.json({
+            subscription: { plan: 'lifetime', status: 'active', lifetime: true },
+            businessId,
+            active: true,
+          });
+        }
       }
     }
 
     if (!dataResponse.ok) return NextResponse.json({ error: await dataResponse.text() }, { status: 500 });
+
     const rows = await dataResponse.json().catch(() => []);
     const subscription = rows?.[0]?.payload?.subscription || null;
 

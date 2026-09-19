@@ -21,7 +21,7 @@ export default function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [staffLoading, setStaffLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleCallbackLoading, setGoogleCallbackLoading] = useState(false);
+  const [googleCallbackLoading, setGoogleCallbackLoading] = useState(\n    typeof window !== 'undefined' && window.location.hash.includes('access_token=')\n  );
   const [otpSent, setOtpSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [otpSending, setOtpSending] = useState(false);
@@ -197,7 +197,7 @@ export default function AuthForm() {
     }
     setGoogleLoading(true);
     const redirectTo = `${window.location.origin}/sign-up-login`;
-    const url = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}&prompt=select_account`;
+    const url = `${supabaseUrl}/auth/v1/authorize?provider=google&response_type=token&redirect_to=${encodeURIComponent(redirectTo)}&prompt=select_account`;
     window.location.assign(url);
   };
 

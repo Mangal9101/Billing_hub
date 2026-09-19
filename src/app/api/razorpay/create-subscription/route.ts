@@ -22,7 +22,7 @@ async function context(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await context(req);
-    if (!ctx) return NextResponse.json({ error: 'Owner access required.' }, { status: 403 });
+    if (!ctx) return NextResponse.json({ error: 'Business access required.' }, { status: 403 });
 
     const body = await req.json().catch(() => ({}));
     const plan = String(body?.plan || 'monthly');

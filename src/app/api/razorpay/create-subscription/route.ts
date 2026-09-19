@@ -13,7 +13,8 @@ async function context(req: NextRequest) {
   const user = await supabaseAuthUser(token);
   if (!user?.id) return null;
   const membership = await verifyCompanyMembership(user.id);
-  const business = membership || await getOwnerBusiness(user.id);
+  const ownedBusiness = await getOwnerBusiness(user.id);
+  const business = ownedBusiness || membership;
   if (!business) return null;
   const businessId = String((business as any).business_id || (business as any).id);
   

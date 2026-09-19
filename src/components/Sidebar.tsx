@@ -214,10 +214,11 @@ export default function Sidebar({
     router.prefetch('/staff');
 
     const key = 'billing_hub_staff_cache_' + session.companyId;
+    const timeKey = key + ':time';
     try {
       const raw = sessionStorage.getItem(key);
-      const cached = raw ? JSON.parse(raw) : null;
-      if (Array.isArray(cached?.staff) && Date.now() - Number(cached.cachedAt || 0) < 60_000) return;
+      const cachedAt = Number(sessionStorage.getItem(timeKey) || 0);
+      if (Array.isArray(raw ? JSON.parse(raw) : null) && Date.now() - cachedAt < 60_000) return;
     } catch {}
 
     fetch('/api/staff?businessId=' + encodeURIComponent(session.companyId), {
@@ -232,7 +233,9 @@ export default function Sidebar({
       .then((staff) => {
         if (!staff) return;
         try {
-          sessionStorage.setItem(key, JSON.stringify({ staff, cachedAt: Date.now() }));
+          // Keep the existing Staff page cache format unchanged.
+          sessionStorage.setItem(key, JSON.stringify(staff));
+          sessionStorage.setItem(timeKey, String(Date.now()));
         } catch {}
       })
       .catch(() => {});

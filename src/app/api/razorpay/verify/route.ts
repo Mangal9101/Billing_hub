@@ -13,7 +13,7 @@ async function paymentContext(req: NextRequest) {
   if (!user?.id) return null;
   const membership = await verifyCompanyMembership(user.id);
   if (!membership) return null;
-  const businessId = String(membership.business_id);
+  const businessId = String((business as any).business_id || (business as any).id);
   
   return { user, businessId };
 }

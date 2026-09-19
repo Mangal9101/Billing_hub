@@ -21,6 +21,7 @@ export default function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [staffLoading, setStaffLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleCallbackLoading, setGoogleCallbackLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [otpSending, setOtpSending] = useState(false);
@@ -208,9 +209,25 @@ export default function AuthForm() {
     const refreshToken = params.get('refresh_token') || undefined;
     if (!accessToken) return;
     window.history.replaceState({}, document.title, window.location.pathname);
-    void finishSession(accessToken, undefined, false, refreshToken).catch((e: any) => toast.error(e?.message || 'Google sign-in failed'));
+    setGoogleCallbackLoading(true);
+    void finishSession(accessToken, undefined, false, refreshToken)
+      .catch((e: any) => toast.error(e?.message || 'Google sign-in failed'))
+      .finally(() => setGoogleCallbackLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (googleCallbackLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-6">
+        <div className="w-full max-w-sm text-center">
+          <div className="flex justify-center mb-5 text-foreground"><AppLogo size={56} showBrandName /></div>
+          <div className="flex justify-center mb-4"><Loader2 size={28} className="animate-spin text-primary" /></div>
+          <h2 className="text-xl font-semibold text-foreground">Signing you in...</h2>
+          <p className="text-sm text-muted-foreground mt-1">Please wait while we securely complete your Google sign-in.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">

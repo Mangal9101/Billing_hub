@@ -1,8 +1,10 @@
 {
-  "id": "/",
+  "id": "/billing-hub",
   "name": "Billing Hub — Billing & Stock Management",
   "short_name": "Billing Hub",
   "description": "Billing, stock, customers, purchases and business management.",
+  "lang": "en",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

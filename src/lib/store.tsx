@@ -219,9 +219,29 @@ function readLocal(userId?:string,businessId?:string,ownerName?:string,ownerEmai
   if(typeof window==='undefined') return freshData(businessId,ownerName,ownerEmail);
   try {
     const raw=localStorage.getItem(storageKey(userId,businessId));
-    return raw
-      ? repairData(JSON.parse(raw),{businessId,ownerName,ownerEmail})
-      : freshData(businessId,ownerName,ownerEmail);
+    // Local snapshots were already normalized before being stored. Avoid running
+    // the expensive repair pass (customer/invoice/ledger reconciliation) on the
+    // main thread every time the user logs in. This makes cached data render
+    // immediately; the fresh cloud snapshot is still normalized below.
+    if(!raw) return freshData(businessId,ownerName,ownerEmail);
+    const parsed=JSON.parse(raw);
+    return {
+      ...freshData(businessId,ownerName,ownerEmail),
+      ...parsed,
+      business:{
+        ...freshData(businessId,ownerName,ownerEmail).business,
+        ...(parsed?.business||{}),
+        id:businessId || parsed?.business?.id || 'biz-empty'
+      },
+      products:Array.isArray(parsed?.products)?parsed.products:[],
+      customers:Array.isArray(parsed?.customers)?parsed.customers:[],
+      invoices:Array.isArray(parsed?.invoices)?parsed.invoices:[],
+      ledger:Array.isArray(parsed?.ledger)?parsed.ledger:[],
+      purchases:Array.isArray(parsed?.purchases)?parsed.purchases:[],
+      movements:Array.isArray(parsed?.movements)?parsed.movements:[],
+      notifications:Array.isArray(parsed?.notifications)?parsed.notifications:[],
+      activity:{invoice:0,products:0,khatabook:0,...(parsed?.activity||{})}
+    };
   } catch {
     return freshData(businessId,ownerName,ownerEmail);
   }

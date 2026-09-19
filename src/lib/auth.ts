@@ -117,6 +117,12 @@ export function clearSession() {
   window.dispatchEvent(new Event('sawariya-auth'));
 }
 
+export const ADMIN_EMAIL = 'mkp94065@gmail.com';
+
+export function isAdminAccount(session: Pick<SessionUser, 'email'> | null | undefined): boolean {
+  return String(session?.email || '').trim().toLowerCase() === ADMIN_EMAIL;
+}
+
 export function hasPermission(permission: Permission): boolean {
   const s = getSession();
   return !!s && (s.isOwner || s.permissions.includes(permission));

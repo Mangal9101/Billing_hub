@@ -23,7 +23,7 @@ export default function AuthForm() {
   const [staffLoading, setStaffLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleCallbackLoading, setGoogleCallbackLoading] = useState(
-    typeof window !== 'undefined' && window.location.hash.includes('access_token=')
+    typeof window !== 'undefined' && (window.location.hash.includes('access_token=') || new URLSearchParams(window.location.search).has('code'))
   );
   const [otpSent, setOtpSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
@@ -200,7 +200,7 @@ export default function AuthForm() {
     }
     setGoogleLoading(true);
     const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+      auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
     });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -216,15 +216,17 @@ export default function AuthForm() {
   };
 
   useEffect(() => {
-    const hasOAuthCallback =
-      window.location.hash.includes('access_token=') ||
-      new URLSearchParams(window.location.search).has('code');
+    const hash = window.location.hash;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const hasHashToken = hash.includes('access_token=');
+    const hasOAuthCallback = hasHashToken || !!code;
 
     if (!hasOAuthCallback) return;
 
     setGoogleCallbackLoading(true);
     const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+      auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
     });
 
     let finished = false;
@@ -243,22 +245,59 @@ export default function AuthForm() {
       }
     };
 
+    const fail = (error: any) => {
+      if (finished) return;
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setGoogleCallbackLoading(false);
+      toast.error(error?.message || 'Google sign-in failed');
+    };
+
+    const completeFromHash = async () => {
+      const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      if (!accessToken) return;
+
+      const { data, error } = await supabase.auth.getUser(accessToken);
+      if (error) throw error;
+      await complete({
+        access_token: accessToken,
+        refresh_token: refreshToken || undefined,
+        user: data.user,
+      });
+    };
+
+    const completeFromCode = async () => {
+      if (!code) return;
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+      if (!data.session?.access_token) {
+        throw new Error('Google sign-in did not return a secure session');
+      }
+      await complete(data.session);
+    };
+
+    const runCallback = async () => {
+      if (hasHashToken) {
+        await completeFromHash();
+        return;
+      }
+
+      if (code) {
+        await completeFromCode();
+        return;
+      }
+
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      await complete(data.session);
+    };
+
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       void complete(session);
     });
 
-    void supabase.auth.getSession()
-      .then(({ data, error }) => {
-        if (error) throw error;
-        return complete(data.session);
-      })
-      .catch((e: any) => {
-        if (!finished) {
-          window.history.replaceState({}, document.title, window.location.pathname);
-          setGoogleCallbackLoading(false);
-          toast.error(e?.message || 'Google sign-in failed');
-        }
-      });
+    void runCallback().catch(fail);
 
     const timeout = window.setTimeout(() => {
       if (!finished) {

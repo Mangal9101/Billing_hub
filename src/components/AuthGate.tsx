@@ -6,7 +6,7 @@ import { getSession, isAdminAccount, type Permission } from '@/lib/auth';
 
 const PUBLIC_PATHS = ['/sign-up-login', '/pricing'];
 const SUBSCRIPTION_CACHE_KEY = 'billing_hub_subscription_cache_v1';
-const SUBSCRIPTION_CACHE_MS = 60_000;
+const SUBSCRIPTION_CACHE_MS = 30_000;
 
 function isSubscriptionActive(subscription: any) {
   if (!subscription) return false;
@@ -97,21 +97,10 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         const cachedSubscription = readSubscriptionCache(s.companyId);
         if (isSubscriptionActive(cachedSubscription)) {
           if (!cancelled) setAllowed(true);
-          // Refresh in the background; a later inactive response still blocks access.
-          void fetch('/api/razorpay/status', {
-            headers: { Authorization: `Bearer ${s.accessToken}` },
-            cache: 'no-store',
-          })
-            .then((response) => response.json().catch(() => ({})))
-            .then((json) => {
-              if (!responseOk(json) || !isSubscriptionActive(json?.subscription)) {
-                clearSubscriptionCache();
-                if (!cancelled) router.replace('/pricing?from=login');
-                return;
-              }
-              writeSubscriptionCache(s.companyId, json.subscription);
-            })
-            .catch(() => {});
+          // A fresh cache entry is already a verified server response.
+          // Avoid another subscription request on every route change.
+          // The server is queried again when this short cache expires.
+          if (!cancelled) setAllowed(true);
         } else {
           try {
             const response = await fetch('/api/razorpay/status', {

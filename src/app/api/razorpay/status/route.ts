@@ -4,7 +4,7 @@ import { supabaseAdmin, supabaseAuthUser, verifyCompanyMembership, getOwnerBusin
 export const dynamic = 'force-dynamic';
 
 function bearer(req: NextRequest) {
-  return (req.headers.get('authorization') || '').replace(/^Bearer\\s+/i, '').trim();
+  return (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
 }
 
 export async function GET(req: NextRequest) {

@@ -86,7 +86,7 @@ export default function AuthForm() {
       isOwner: result.role === 'owner',
     });
     toast.success(result.firstLogin ? 'Owner account created successfully!' : 'Signed in successfully!');
-    router.push('/');
+    router.push('/pricing?from=login');
     return true;
   };
 
@@ -103,7 +103,7 @@ export default function AuthForm() {
       if (!r.ok) throw new Error(result?.error || 'Invalid staff Login ID or password');
       setSession({ uid: result.uid, email: result.email, name: result.name, role: result.role, companyId: result.companyId, permissions: result.permissions || [], accessToken: result.accessToken, refreshToken: result.refreshToken, isOwner: false });
       toast.success('Staff login successful');
-      router.push('/');
+      router.push('/pricing?from=login');
     } catch (e: any) {
       toast.error(e?.message || 'Login failed');
     } finally {

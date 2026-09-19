@@ -701,7 +701,7 @@ export default function Sidebar({
 
           <Link
             href="/sign-up-login"
-            onClick={() => clearSession()}
+            onClick={handleSignOut}
             className="flex items-center gap-2 px-2 py-2 rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600"
           >
             <LogOut size={16} />

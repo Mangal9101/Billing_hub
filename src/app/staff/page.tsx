@@ -27,24 +27,29 @@ export default function StaffPage(){
  const openAdd=()=>{setEditing(null);setForm({...emptyForm});setErrors({});setLoginIdStatus('idle');setShowPassword(false);setShowModal(true);};
  const openEdit=(s:StaffMember)=>{setEditing(s);setForm({name:s.name,phone:s.phone,email:s.email||'',role:s.role,salary:s.salary||0,status:s.status,loginId:s.loginId,password:'',permissions:s.permissions?.length?s.permissions:defaultPermissions(s.role.toLowerCase() as any)});setErrors({});setShowPassword(false);setShowModal(true);};
  const validate=()=>{const e:Record<string,string>={};if(!form.name.trim())e.name='Name required';if(!/^\d{10}$/.test(form.phone))e.phone='Enter valid 10-digit phone';if(!editing&&!form.loginId.trim())e.loginId='Login ID required';if(!editing&&form.loginId.trim()&&loginIdStatus!=='available')e.loginId=loginIdStatus==='exists'?'This Login ID already exists':'Check Login ID availability';if(!editing&&form.password.length<6)e.password='Password must be at least 6 characters';if(form.salary<0)e.salary='Salary cannot be negative';setErrors(e);return !Object.keys(e).length;};
- const loginIdCheckRef=React.useRef(0);
+ const loginIdCheckRef=React.useRef(0); const loginIdAbortRef=React.useRef<AbortController|null>(null);
  const checkLoginIdAvailability=async(nextLoginId?:string)=>{
    if(editing||!showModal)return;
    const id=(nextLoginId ?? form.loginId).trim().toLowerCase();
    if(!id){setLoginIdStatus('idle');return;}
+   loginIdAbortRef.current?.abort();
+   const controller=new AbortController();
+   loginIdAbortRef.current=controller;
    setLoginIdStatus('checking');
    const requestId=++loginIdCheckRef.current;
    try{
      const s=getSession();
      const r=await fetch(`/api/staff?businessId=${encodeURIComponent(s?.companyId||'')}&checkLoginId=${encodeURIComponent(id)}`,{
        headers:{Authorization:`Bearer ${s?.accessToken||''}`},
-       cache:'no-store'
+       cache:'no-store',
+       signal:controller.signal
      });
      const j=await r.json();
      if(requestId!==loginIdCheckRef.current)return;
      if(!r.ok)throw new Error(j.error||'Unable to check Login ID');
      setLoginIdStatus(j.available?'available':'exists');
-   }catch{
+   }catch(error){
+     if((error as any)?.name==='AbortError')return;
      if(requestId===loginIdCheckRef.current)setLoginIdStatus('idle');
    }
  };

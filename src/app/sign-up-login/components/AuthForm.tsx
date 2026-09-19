@@ -86,7 +86,7 @@ export default function AuthForm() {
       isOwner: result.role === 'owner',
     });
     toast.success(result.firstLogin ? 'Owner account created successfully!' : 'Signed in successfully!');
-    router.push(isAdminAccount(getSession()) ? '/' : '/pricing?from=login');
+    router.push('/');
     return true;
   };
 

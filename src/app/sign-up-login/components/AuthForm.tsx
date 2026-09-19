@@ -22,9 +22,11 @@ export default function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [staffLoading, setStaffLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleCallbackLoading, setGoogleCallbackLoading] = useState(
-    typeof window !== 'undefined' && (window.location.hash.includes('access_token=') || new URLSearchParams(window.location.search).has('code'))
-  );
+  // Start in the callback/loading state during the first render. On an OAuth
+  // return, the browser can render this component before the callback effect
+  // runs; initializing to false caused the normal login form to flash for a
+  // moment before Google session completion finished.
+  const [googleCallbackLoading, setGoogleCallbackLoading] = useState(true);
   const [otpSent, setOtpSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [otpSending, setOtpSending] = useState(false);
@@ -222,7 +224,11 @@ export default function AuthForm() {
     const hasHashToken = hash.includes('access_token=');
     const hasOAuthCallback = hasHashToken || !!code;
 
-    if (!hasOAuthCallback) return;
+    if (!hasOAuthCallback) {
+      // Normal direct visit to /sign-up-login: show the regular login form.
+      setGoogleCallbackLoading(false);
+      return;
+    }
 
     setGoogleCallbackLoading(true);
     const supabase = createClient(supabaseUrl, supabaseKey, {

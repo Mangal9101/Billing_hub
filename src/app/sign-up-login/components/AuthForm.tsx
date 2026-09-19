@@ -19,6 +19,7 @@ export default function AuthForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [staffLoading, setStaffLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
@@ -91,7 +92,7 @@ export default function AuthForm() {
   };
 
   const onLogin = async (data: LoginFormData) => {
-    setIsLoading(true);
+    setStaffLoading(true);
     try {
       const loginId = data.email.trim();
       const r = await fetch('/api/auth/staff-login', {
@@ -103,11 +104,11 @@ export default function AuthForm() {
       if (!r.ok) throw new Error(result?.error || 'Invalid staff Login ID or password');
       setSession({ uid: result.uid, email: result.email, name: result.name, role: result.role, companyId: result.companyId, permissions: result.permissions || [], accessToken: result.accessToken, refreshToken: result.refreshToken, isOwner: false });
       toast.success('Staff login successful');
-      router.push(isAdminAccount(getSession()) ? '/' : '/pricing?from=login');
+      router.push('/');
     } catch (e: any) {
       toast.error(e?.message || 'Login failed');
     } finally {
-      setIsLoading(false);
+      setStaffLoading(false);
     }
   };
 
@@ -246,7 +247,7 @@ export default function AuthForm() {
           {mode === 'otp' ? (
             <OtpPanel otpForm={otpForm} onVerifyOtp={onVerifyOtp} onSendOtp={onSendOtp} otpSent={otpSent} otpCooldown={otpCooldown} otpSending={otpSending} otpVerifying={otpVerifying} onBack={() => { setMode('login'); setOtpSent(false); }} />
           ) : (
-            <LoginPanel form={loginForm} onSubmit={loginForm.handleSubmit(onLogin)} showPassword={showPassword} setShowPassword={setShowPassword} isLoading={isLoading} googleLoading={googleLoading} onGoogleLogin={handleGoogleLogin} onOtpMode={(email:string) => { otpForm.setValue('email', email); otpForm.setValue('otp', ''); setOtpSent(false); setOtpCooldown(0); setMode('otp'); }} />
+            <LoginPanel form={loginForm} onSubmit={loginForm.handleSubmit(onLogin)} showPassword={showPassword} setShowPassword={setShowPassword} isLoading={isLoading} staffLoading={staffLoading} googleLoading={googleLoading} onGoogleLogin={handleGoogleLogin} onOtpMode={(email:string) => { otpForm.setValue('email', email); otpForm.setValue('otp', ''); setOtpSent(false); setOtpCooldown(0); setMode('otp'); }} />
           )}
         </div>
       </div>
@@ -261,7 +262,7 @@ function GoogleButton({ loading, onClick }: { loading:boolean; onClick:()=>void 
   </button>;
 }
 
-function LoginPanel({ form, onSubmit, showPassword, setShowPassword, isLoading, googleLoading, onGoogleLogin, onOtpMode }: any) {
+function LoginPanel({ form, onSubmit, showPassword, setShowPassword, isLoading, staffLoading, googleLoading, onGoogleLogin, onOtpMode }: any) {
   const { register, handleSubmit, formState:{errors} } = form;
   const [staffOpen, setStaffOpen] = useState(false);
   const [ownerEmail, setOwnerEmail] = useState('');
@@ -372,8 +373,8 @@ function LoginPanel({ form, onSubmit, showPassword, setShowPassword, isLoading, 
             <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">Remember me for 30 days</label>
           </div>
 
-          <button type="submit" disabled={isLoading} className="btn-primary w-full flex items-center justify-center gap-2 py-2.5">
-            {isLoading?<><Loader2 size={16} className="animate-spin"/>Signing in...</>:<>Staff Sign In<ArrowRight size={16}/></>}
+          <button type="submit" disabled={staffLoading || isLoading} className="btn-primary w-full flex items-center justify-center gap-2 py-2.5">
+            {staffLoading?<><Loader2 size={16} className="animate-spin"/>Signing in...</>:<>Staff Sign In<ArrowRight size={16}/></>}
           </button>
         </form>
       )}

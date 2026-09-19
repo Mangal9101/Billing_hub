@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Crown, Loader2, CreditCard, ShieldCheck } from 'lucide-react';
+import { Check, Crown, Loader2, CreditCard, ShieldCheck, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
-import { getSession } from '@/lib/auth';
+import { getSession, clearSession } from '@/lib/auth';
+import { useSearchParams } from 'next/navigation';
 
 declare global {
   interface Window {
@@ -21,6 +22,8 @@ const plans = [
 export default function PricingPage() {
   const [loading, setLoading] = useState('');
   const [status, setStatus] = useState<any>(null);
+  const searchParams = useSearchParams();
+  const showSignOut = searchParams.get('from') === 'login';
   const session = getSession();
 
   useEffect(() => {
@@ -122,7 +125,7 @@ export default function PricingPage() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <p className="text-xs uppercase tracking-widest text-primary font-semibold">Billing Hub</p>
-          <h1 className="text-3xl font-bold text-foreground mt-2">Plans & Billing</h1>
+          <div className="flex items-center justify-between gap-3"><h1 className="text-3xl font-bold text-foreground">Plans & Billing</h1>{showSignOut && <button type="button" onClick={() => { clearSession(); window.location.href = '/sign-up-login'; }} className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted" title="Sign out"><LogOut size={17}/> <span className="hidden sm:inline">Sign out</span></button>}</div>
           <p className="text-sm text-muted-foreground mt-2">Choose a plan that fits your business.</p>
           {status?.status === 'active' && <div className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-full bg-green-50 border border-green-200 text-green-700 text-sm"><ShieldCheck size={15}/> Active plan: {status.plan === 'lifetime' ? 'Lifetime' : status.plan}</div>}
         </div>

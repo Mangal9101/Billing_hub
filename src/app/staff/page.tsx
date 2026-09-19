@@ -48,12 +48,6 @@ export default function StaffPage(){
      if(requestId===loginIdCheckRef.current)setLoginIdStatus('idle');
    }
  };
- useEffect(()=>{
-   if(editing||!showModal){setLoginIdStatus('idle');return;}
-   const id=form.loginId.trim();
-   if(!id){setLoginIdStatus('idle');return;}
-   setLoginIdStatus('idle');
- });
  const save=async()=>{if(!validate())return;if(!editing&&loginIdStatus!=='available'){setErrors(e=>({...e,loginId:loginIdStatus==='exists'?'This Login ID already exists':'Check Login ID availability'}));return;}const s=getSession();try{const payload={...form,businessId:s?.companyId||'',role:form.role.toLowerCase(),joinDate:new Date().toLocaleDateString('en-GB'),join_date:new Date().toLocaleDateString('en-GB')};const r=await fetch('/api/staff'+(editing?`?id=${encodeURIComponent(editing.id)}`:''),{method:editing?'PATCH':'POST',headers:{Authorization:`Bearer ${s?.accessToken||''}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});const j=await r.json();if(!r.ok)throw new Error(j.error);setShowModal(false);if(!editing)setGenerated({name:form.name,loginId:form.loginId,password:form.password,role:form.role});toast.success(editing?'Staff updated':'Staff account created');await load();}catch(e:any){toast.error(e.message||'Unable to save staff');}};
  const remove=async(id:string)=>{const s=getSession();try{const r=await fetch(`/api/staff?id=${encodeURIComponent(id)}&businessId=${encodeURIComponent(s?.companyId||'')}`,{method:'DELETE',headers:{Authorization:`Bearer ${s?.accessToken||''}`}});const j=await r.json();if(!r.ok)throw new Error(j.error);setDeleteConfirm(null);toast.success('Staff removed');await load();}catch(e:any){toast.error(e.message||'Unable to remove staff');}};
  const toggle=(p:Permission)=>setForm(f=>({...f,permissions:f.permissions.includes(p)?f.permissions.filter(x=>x!==p):[...f.permissions,p]}));

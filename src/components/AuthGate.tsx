@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { getSession, type Permission } from '@/lib/auth';
+import { getSession, isAdminAccount, type Permission } from '@/lib/auth';
 
 const PUBLIC_PATHS = ['/sign-up-login', '/pricing'];
 
@@ -52,6 +52,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Admin account bypasses subscription gating.
+      if (!isAdminAccount(s)) {
       // Every signed-in user must have an active plan or trial before using the app.
       try {
         const response = await fetch('/api/razorpay/status', {
@@ -66,6 +68,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       } catch {
         router.replace('/pricing');
         return;
+      }
+
       }
 
       const required: Array<[string, Permission]> = [

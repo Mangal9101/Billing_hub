@@ -216,17 +216,23 @@ export default function AuthForm() {
   };
 
   useEffect(() => {
-    const finishGoogleCallback = async () => {
-      if (!window.location.hash.includes('access_token=')) return;
-      setGoogleCallbackLoading(true);
+    const hasOAuthCallback =
+      window.location.hash.includes('access_token=') ||
+      new URLSearchParams(window.location.search).has('code');
+
+    if (!hasOAuthCallback) return;
+
+    setGoogleCallbackLoading(true);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+    });
+
+    let finished = false;
+
+    const complete = async (session: any) => {
+      if (finished || !session?.access_token) return;
+      finished = true;
       try {
-        const supabase = createClient(supabaseUrl, supabaseKey, {
-          auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
-        });
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        const session = data.session;
-        if (!session?.access_token) throw new Error('Google session was not returned. Please try again.');
         window.history.replaceState({}, document.title, window.location.pathname);
         await finishSession(session.access_token, session.user?.email, false, session.refresh_token);
       } catch (e: any) {
@@ -236,7 +242,35 @@ export default function AuthForm() {
         setGoogleCallbackLoading(false);
       }
     };
-    void finishGoogleCallback();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      void complete(session);
+    });
+
+    void supabase.auth.getSession()
+      .then(({ data, error }) => {
+        if (error) throw error;
+        return complete(data.session);
+      })
+      .catch((e: any) => {
+        if (!finished) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setGoogleCallbackLoading(false);
+          toast.error(e?.message || 'Google sign-in failed');
+        }
+      });
+
+    const timeout = window.setTimeout(() => {
+      if (!finished) {
+        setGoogleCallbackLoading(false);
+        toast.error('Google sign-in timed out. Please try again.');
+      }
+    }, 15000);
+
+    return () => {
+      window.clearTimeout(timeout);
+      listener.subscription.unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

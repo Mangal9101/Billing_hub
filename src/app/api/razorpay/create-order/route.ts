@@ -5,7 +5,7 @@ import { RAZORPAY_KEY_ID, razorpayRequest } from '@/lib/razorpay';
 export const dynamic = 'force-dynamic';
 
 function bearer(req: NextRequest) {
-  return (req.headers.get('authorization') || '').replace(/^Bearer\\s+/i, '').trim();
+  return (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
 }
 
 export async function POST(req: NextRequest) {

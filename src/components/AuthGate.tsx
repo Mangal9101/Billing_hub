@@ -22,25 +22,24 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
     const check = async () => {
       if (PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/_next')) {
+        const s = getSession();
         if (pathname === '/pricing') {
-          const s = getSession();
           if (!s?.accessToken || !s.companyId) {
             router.replace('/sign-up-login');
             return;
           }
-          try {
-            const response = await fetch('/api/razorpay/status', {
-              headers: { Authorization: `Bearer ${s.accessToken}` },
-              cache: 'no-store',
-            });
-            const json = await response.json().catch(() => ({}));
-            if (!cancelled && response.ok && isSubscriptionActive(json?.subscription)) {
-              router.replace('/');
-              return;
-            }
-          } catch {
-            // Keep pricing accessible so a user can retry payment.
-          }
+          // Render pricing immediately; verify active subscription in the background.
+          if (!cancelled) setAllowed(true);
+          fetch('/api/razorpay/status', {
+            headers: { Authorization: `Bearer ${s.accessToken}` },
+            cache: 'no-store',
+          })
+            .then((response) => response.json().catch(() => ({})))
+            .then((json) => {
+              if (!cancelled && isSubscriptionActive(json?.subscription)) router.replace('/');
+            })
+            .catch(() => {});
+          return;
         }
         if (!cancelled) setAllowed(true);
         return;

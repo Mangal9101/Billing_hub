@@ -83,7 +83,7 @@ export default function AuthForm() {
       setMode('otp');
       setOtpSent(false);
       setOtpCooldown(0);
-      toast.info('New device detected. Verify your email with the 8-digit OTP.');
+      toast.info('New device detected. Verify your email with the 6-digit OTP.');
       return false;
     }
 
@@ -148,7 +148,7 @@ export default function AuthForm() {
     try {
       await sendOtp(data.email, { full_name: data.name.trim(), phone: data.phone });
       setMode('otp');
-      toast.success('8-digit verification OTP sent to your email');
+      toast.success('6-digit verification OTP sent to your email');
     } catch (e: any) {
       toast.error(friendlyAuthError(e, 'Unable to send email OTP. Please try again.'));
     } finally {
@@ -169,7 +169,7 @@ export default function AuthForm() {
     setOtpSending(true);
     try {
       await sendOtp(email);
-      toast.success('8-digit OTP sent to your email address');
+      toast.success('6-digit OTP sent to your email address');
     } catch (e: any) {
       toast.error(friendlyAuthError(e, 'Unable to send OTP. Please try again.'));
     } finally {
@@ -205,8 +205,8 @@ export default function AuthForm() {
   const onVerifyOtp = async (data: OtpFormData) => {
     const email = data.email.trim().toLowerCase();
     const otp = data.otp.trim();
-    if (!/^\d{8}$/.test(otp)) {
-      otpForm.setError('otp', { message: 'Enter a valid 8-digit OTP' });
+    if (!/^\d{6}$/.test(otp)) {
+      otpForm.setError('otp', { message: 'Enter a valid 6-digit OTP' });
       return;
     }
     setOtpVerifying(true);
@@ -560,17 +560,17 @@ function SignupPanel({ form, onSubmit, showPassword, setShowPassword, showConfir
     <div><label className="block text-sm font-medium text-foreground mb-1.5">Password</label><div className="relative"><Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/><input {...register('password',{required:'Password required',minLength:{value:8,message:'Minimum 8 characters'}})} type={showPassword?'text':'password'} placeholder="Min. 8 characters" className="input-field pl-8 pr-9 text-sm"/><button type="button" onClick={()=>setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">{showPassword?<EyeOff size={14}/>:<Eye size={14}/>}</button></div>{errors.password&&<p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}</div>
     <div><label className="block text-sm font-medium text-foreground mb-1.5">Confirm Password</label><div className="relative"><Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/><input {...register('confirmPassword',{required:'Please confirm password'})} type={showConfirmPassword?'text':'password'} placeholder="Repeat password" className="input-field pl-8 pr-9 text-sm"/><button type="button" onClick={()=>setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">{showConfirmPassword?<EyeOff size={14}/>:<Eye size={14}/>}</button></div>{errors.confirmPassword&&<p className="mt-1 text-xs text-red-600">{errors.confirmPassword.message}</p>}</div>
     <button type="submit" disabled={isLoading} className="btn-primary w-full flex items-center justify-center gap-2 py-2.5">{isLoading?<><Loader2 size={16} className="animate-spin"/>Sending OTP...</>:<>Create Account<ArrowRight size={16}/></>}</button>
-    <p className="text-xs text-center text-muted-foreground">You will verify this account using an 8-digit email OTP.</p>
+    <p className="text-xs text-center text-muted-foreground">You will verify this account using an 6-digit email OTP.</p>
   </form>;
 }
 
 function OtpPanel({ otpForm, onVerifyOtp, onSendOtp, otpSent, otpCooldown, otpSending, otpVerifying, onBack }: any) {
   const { register, handleSubmit, formState:{errors} } = otpForm;
   return <form onSubmit={handleSubmit(onVerifyOtp)} className="space-y-5" noValidate>
-    <div><button type="button" onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">← Back to Sign In</button><h2 className="text-2xl font-bold text-foreground mb-1">Email OTP Login</h2><p className="text-sm text-muted-foreground">Enter your email to receive an 8-digit one-time password</p></div>
+    <div><button type="button" onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">← Back to Sign In</button><h2 className="text-2xl font-bold text-foreground mb-1">Email OTP Login</h2><p className="text-sm text-muted-foreground">Enter your email to receive an 6-digit one-time password</p></div>
     <div><label className="block text-sm font-medium text-foreground mb-1.5">Email Address</label><div className="flex gap-2"><div className="relative flex-1"><Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/><input {...register('email',{required:'Email required',pattern:{value:/^\S+@\S+\.\S+$/,message:'Valid email required'}})} type="email" placeholder="owner@example.com" className="input-field pl-9"/></div><button type="button" onClick={onSendOtp} disabled={otpSending||otpVerifying||otpCooldown>0} className="btn-primary whitespace-nowrap px-4 text-sm flex items-center gap-1.5">{otpSending?<Loader2 size={14} className="animate-spin"/>:null}{otpCooldown>0?`${otpCooldown}s`:(otpSent?'Resend':'Send OTP')}</button></div>{errors.email&&<p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}</div>
-    {otpSent&&<div className="p-3 bg-green-50 border border-green-200 rounded-lg"><p className="text-sm text-green-700">8-digit OTP sent to your email. Check Inbox/Spam and enter the code below.</p></div>}
-    <div><label className="block text-sm font-medium text-foreground mb-1.5">Enter 8-digit OTP</label><input {...register('otp',{required:'OTP is required',validate:(v:string)=>/^\d{8}$/.test(v)||'8-digit OTP required'})} type="text" inputMode="numeric" placeholder="12345678" maxLength={8} className="input-field tracking-widest text-center text-lg font-mono" onInput={(e)=>{e.currentTarget.value=e.currentTarget.value.replace(/\D/g,'').slice(0,8);}}/>{errors.otp&&<p className="mt-1 text-xs text-red-600">{errors.otp.message}</p>}</div>
+    {otpSent&&<div className="p-3 bg-green-50 border border-green-200 rounded-lg"><p className="text-sm text-green-700">6-digit OTP sent to your email. Check Inbox/Spam and enter the code below.</p></div>}
+    <div><label className="block text-sm font-medium text-foreground mb-1.5">Enter 6-digit OTP</label><input {...register('otp',{required:'OTP is required',validate:(v:string)=>/^\d{6}$/.test(v)||'6-digit OTP required'})} type="text" inputMode="numeric" placeholder="123456" maxLength={6} className="input-field tracking-widest text-center text-lg font-mono" onInput={(e)=>{e.currentTarget.value=e.currentTarget.value.replace(/\D/g,'').slice(0,6);}}/>{errors.otp&&<p className="mt-1 text-xs text-red-600">{errors.otp.message}</p>}</div>
     <button type="submit" disabled={otpVerifying||otpSending||!otpSent} className="btn-primary w-full flex items-center justify-center gap-2 py-2.5">{otpVerifying?<><Loader2 size={16} className="animate-spin"/>Verifying...</>:<>Verify & Sign In<ArrowRight size={16}/></>}</button>
   </form>;
 }

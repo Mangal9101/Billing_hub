@@ -11,10 +11,13 @@ function bearer(req: NextRequest) {
 async function paymentContext(req: NextRequest) {
   const user = await supabaseAuthUser(bearer(req));
   if (!user?.id) return null;
+
   const membership = await verifyCompanyMembership(user.id);
   if (!membership) return null;
-  const businessId = String((business as any).business_id || (business as any).id);
-  
+
+  const businessId = String((membership as any).business_id || '');
+  if (!businessId) return null;
+
   return { user, businessId };
 }
 

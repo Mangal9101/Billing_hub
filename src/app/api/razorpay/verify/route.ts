@@ -33,10 +33,15 @@ async function saveSubscription(businessId: string, patch: Record<string, unknow
       updatedAt: new Date().toISOString(),
     },
   };
-  await supabaseAdmin(`business_data?business_id=eq.${encodeURIComponent(businessId)}`, {
+  const response = await supabaseAdmin(`business_data?business_id=eq.${encodeURIComponent(businessId)}`, {
     method: 'PATCH',
     body: JSON.stringify({ payload: next, updated_at: new Date().toISOString() }),
   });
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(errorText || 'Unable to save subscription.');
+  }
+  return next.subscription;
 }
 
 export async function POST(req: NextRequest) {
@@ -53,13 +58,13 @@ export async function POST(req: NextRequest) {
       if (!verifyCheckoutSignature(`${paymentId}|${subscriptionId}`, signature)) {
         return NextResponse.json({ error: 'Invalid Razorpay signature.' }, { status: 400 });
       }
-      await saveSubscription(ctx.businessId, {
+      const subscription = await saveSubscription(ctx.businessId, {
         status: 'active',
         plan: String(body?.plan || 'monthly'),
         razorpaySubscriptionId: subscriptionId,
         lastPaymentId: paymentId,
       });
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true, subscription });
     }
 
     const orderId = String(body?.razorpay_order_id || '');
@@ -70,14 +75,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid Razorpay signature.' }, { status: 400 });
     }
 
-    await saveSubscription(ctx.businessId, {
+    const subscription = await saveSubscription(ctx.businessId, {
       status: 'active',
       plan: 'lifetime',
       razorpayOrderId: orderId,
       lastPaymentId: paymentId,
       lifetime: true,
     });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, subscription });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unable to verify payment.' }, { status: 500 });
   }

@@ -23,6 +23,7 @@ export default function PricingPage() {
   const [loading, setLoading] = useState('');
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [status, setStatus] = useState<any>(null);
+  const [trialEligible, setTrialEligible] = useState<boolean | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const showSignOut = searchParams.get('from') === 'login';
@@ -40,11 +41,15 @@ export default function PricingPage() {
     if (!session?.accessToken) return;
     fetch('/api/razorpay/status', { headers: { Authorization: `Bearer ${session.accessToken}` }, cache: 'no-store' })
       .then((r) => r.json())
-      .then((j) => setStatus(j.subscription || null))
+      .then((j) => {
+        setStatus(j.subscription || null);
+        setTrialEligible(j.trialEligible !== false);
+      })
       .catch(() => {});
   }, [session?.accessToken]);
 
   const currentPlan = plans.find((p) => p.id === status?.plan);
+  const visiblePlans = plans.filter((plan) => plan.id !== 'monthly' || trialEligible !== false);
   const formatDate = (value: unknown) => {
     if (!value) return 'Not available';
     const date = new Date(String(value));
@@ -289,7 +294,7 @@ export default function PricingPage() {
         )}
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {plans.map((plan) => {
+          {visiblePlans.map((plan) => {
             const busy = loading === plan.id;
             return (
               <div key={plan.id} onClick={() => setSelectedPlan(plan.id)} className={`rounded-2xl border ${selectedPlan === plan.id ? 'border-primary shadow-lg' : 'border-border'} bg-card p-5 flex flex-col cursor-pointer transition-colors`}>

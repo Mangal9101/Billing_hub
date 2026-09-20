@@ -55,24 +55,24 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         const s = getSession();
 
         if (pathname === '/pricing') {
-          if (!s?.accessToken || !s.companyId) {
-            router.replace('/sign-up-login');
-            return;
-          }
-
-          // Pricing itself can render immediately. Subscription verification is
-          // intentionally kept in the background so navigation is not blocked.
+          // Pricing must remain reachable from browser history even after
+          // signing out. Do not replace /pricing with /sign-up-login when
+          // there is no session; checkout itself already asks the user to
+          // sign in. This preserves the expected Back flow:
+          // Sign in -> Pricing -> Sign out -> Sign in -> Back -> Pricing.
           if (!cancelled) setAllowed(true);
 
-          void fetch('/api/razorpay/status', {
-            headers: { Authorization: `Bearer ${s.accessToken}` },
-            cache: 'no-store',
-          })
-            .then((response) => response.json().catch(() => ({})))
-            .then((json) => {
-              if (!cancelled && isSubscriptionActive(json?.subscription)) router.replace('/');
+          if (s?.accessToken && s.companyId) {
+            void fetch('/api/razorpay/status', {
+              headers: { Authorization: `Bearer ${s.accessToken}` },
+              cache: 'no-store',
             })
-            .catch(() => {});
+              .then((response) => response.json().catch(() => ({})))
+              .then((json) => {
+                if (!cancelled && isSubscriptionActive(json?.subscription)) router.replace('/');
+              })
+              .catch(() => {});
+          }
           return;
         }
 

@@ -43,6 +43,24 @@ export default function PricingPage() {
       .catch(() => {});
   }, [session?.accessToken]);
 
+  const currentPlan = plans.find((p) => p.id === status?.plan);
+  const formatDate = (value: unknown) => {
+    if (!value) return 'Not available';
+    const date = new Date(String(value));
+    return Number.isNaN(date.getTime()) ? 'Not available' : date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+  const activationDate = status?.updatedAt || status?.activatedAt;
+  const nextBillingDate = (() => {
+    if (!activationDate || status?.lifetime) return null;
+    const date = new Date(String(activationDate));
+    if (Number.isNaN(date.getTime())) return null;
+    if (status?.plan === 'monthly') date.setDate(date.getDate() + 7);
+    else if (status?.plan === 'quarterly') date.setMonth(date.getMonth() + 3);
+    else if (status?.plan === 'yearly') date.setFullYear(date.getFullYear() + 1);
+    else return null;
+    return date;
+  })();
+
   const openCheckout = async (planId: string) => {
     if (!session?.accessToken) {
       toast.error('Please sign in first.');
@@ -86,7 +104,15 @@ export default function PricingPage() {
           });
           const result = await verify.json().catch(() => ({}));
           if (!verify.ok) throw new Error(result?.error || 'Payment verification failed.');
-          setStatus({ plan: planId, status: 'active', lifetime: planId === 'lifetime' });
+          setStatus({
+            plan: planId,
+            status: 'active',
+            lifetime: planId === 'lifetime',
+            updatedAt: new Date().toISOString(),
+            lastPaymentId: response?.razorpay_payment_id,
+            razorpaySubscriptionId: response?.razorpay_subscription_id,
+            razorpayOrderId: response?.razorpay_order_id,
+          });
           toast.success('Payment successful. Your Billing Hub plan is active.');
           setLoading('');
         },
@@ -118,6 +144,53 @@ export default function PricingPage() {
           <p className="text-sm text-muted-foreground mt-2">Choose a plan that fits your business.</p>
           {status?.status === 'active' && <div className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-full bg-green-50 border border-green-200 text-green-700 text-sm"><ShieldCheck size={15}/> Active plan: {status.plan === 'lifetime' ? 'Lifetime' : status.plan}</div>}
         </div>
+
+        {status?.status === 'active' && (
+          <div className="mb-7 rounded-2xl border border-border bg-card p-5 md:p-6 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={20} className="text-green-600" />
+                  <h2 className="text-lg font-bold text-foreground">Your Current Plan</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">Your active Billing Hub subscription and payment details.</p>
+              </div>
+              <span className="inline-flex w-fit items-center gap-2 rounded-full bg-green-50 border border-green-200 px-3 py-1.5 text-xs font-semibold text-green-700">
+                <span className="h-2 w-2 rounded-full bg-green-600" /> Active
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl border border-border bg-background/50 p-4">
+                <p className="text-xs text-muted-foreground">Current plan</p>
+                <p className="mt-1 font-semibold text-foreground">{currentPlan?.name || status.plan || 'Active'}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-background/50 p-4">
+                <p className="text-xs text-muted-foreground">Amount</p>
+                <p className="mt-1 font-semibold text-foreground">{currentPlan?.price || '—'} <span className="text-xs font-normal text-muted-foreground">{currentPlan?.period || ''}</span></p>
+              </div>
+              <div className="rounded-xl border border-border bg-background/50 p-4">
+                <p className="text-xs text-muted-foreground">Activated on</p>
+                <p className="mt-1 font-semibold text-foreground">{formatDate(activationDate)}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-background/50 p-4">
+                <p className="text-xs text-muted-foreground">{status?.lifetime ? 'Validity' : 'Next billing'}</p>
+                <p className="mt-1 font-semibold text-foreground">{status?.lifetime ? 'Lifetime — No expiry' : formatDate(nextBillingDate)}</p>
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-xs text-muted-foreground">Billing cycle</p>
+                <p className="mt-1 text-sm font-medium text-foreground">{status?.lifetime ? 'One-time payment' : currentPlan?.period?.replace(/^\s*\//, '') || 'Recurring'}</p>
+              </div>
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-xs text-muted-foreground">Payment / subscription ID</p>
+                <p className="mt-1 break-all text-sm font-medium text-foreground">{status?.lastPaymentId || status?.razorpaySubscriptionId || status?.razorpayOrderId || 'Not available'}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => {

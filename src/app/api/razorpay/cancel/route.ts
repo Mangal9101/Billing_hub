@@ -66,11 +66,11 @@ export async function POST(req: NextRequest) {
     // Trial: cancel immediately.
     // Paid plan: stop the next renewal but preserve access until the paid
     // billing cycle ends.
-    const scheduleChangeAt = isTrial ? 'now' : 'cycle_end';
+    const cancelAtCycleEnd = !isTrial;
 
     const r = await razorpayRequest(`subscriptions/${encodeURIComponent(subscriptionId)}/cancel`, {
       method: 'POST',
-      body: JSON.stringify({ schedule_change_at: scheduleChangeAt }),
+      body: JSON.stringify({ cancel_at_cycle_end: cancelAtCycleEnd }),
     });
     const result = await r.json().catch(() => ({}));
 

@@ -100,6 +100,8 @@ export default function PricingPage() {
             body: JSON.stringify({
               type: planId === 'lifetime' ? 'order' : 'subscription',
               plan: planId,
+              trial: planId === 'monthly' && Boolean(data?.trial),
+              trialEndsAt: data?.trialEndsAt || null,
               ...response,
             }),
           });

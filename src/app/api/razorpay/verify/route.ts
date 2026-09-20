@@ -44,7 +44,7 @@ async function saveSubscription(businessId: string, patch: Record<string, unknow
   return next.subscription;
 }
 
-async function markTrialUsed(userId: string) {
+async function markTrialUsed(userId: string, existingMetadata: Record<string, unknown> = {}) {
   const response = await fetch(
     process.env.NEXT_PUBLIC_SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(userId),
     {
@@ -54,7 +54,12 @@ async function markTrialUsed(userId: string) {
         Authorization: 'Bearer ' + (process.env.SUPABASE_SERVICE_ROLE_KEY || ''),
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ user_metadata: { billing_hub_trial_used_at: new Date().toISOString() } }),
+      body: JSON.stringify({
+        user_metadata: {
+          ...existingMetadata,
+          billing_hub_trial_used_at: new Date().toISOString(),
+        },
+      }),
       cache: 'no-store',
     },
   );
@@ -88,7 +93,7 @@ export async function POST(req: NextRequest) {
         razorpaySubscriptionId: subscriptionId,
         lastPaymentId: paymentId,
       });
-      if (isTrial) await markTrialUsed(ctx.user.id);
+      if (isTrial) await markTrialUsed(ctx.user.id, ctx.user.user_metadata || {});
       return NextResponse.json({ ok: true, subscription });
     }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/server-supabase';
 import { verifyWebhookSignature } from '@/lib/razorpay';
+import { sendBillingHubPaymentEmail } from '@/lib/billing-email';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,18 +43,47 @@ export async function POST(req: NextRequest) {
 
     if (businessId) {
       if (eventName === 'subscription.charged') {
+        const plan = String(entity?.notes?.plan || 'monthly');
+        const paymentId = String(entity?.payment_id || entity?.id || '');
+        const currentEnd = entity?.current_end
+          ? new Date(Number(entity.current_end) * 1000).toISOString()
+          : null;
+
+        // The initial payment is already emailed by /verify. If the webhook
+        // arrives first, the Resend idempotency key still prevents a duplicate.
+        const existingResponse = await supabaseAdmin(
+          `business_data?business_id=eq.${encodeURIComponent(businessId)}&select=payload&limit=1`
+        );
+        const existingRows = await existingResponse.json().catch(() => []);
+        const existingSubscription = existingRows?.[0]?.payload?.subscription || {};
+        const isInitialPayment = Boolean(paymentId) && existingSubscription?.lastPaymentId === paymentId;
+
         await saveByBusinessId(businessId, {
           status: 'active',
-          plan: String(entity?.notes?.plan || 'monthly'),
+          plan,
           isTrial: false,
           autoPayCancelled: false,
-          currentPeriodEndsAt: entity?.current_end
-            ? new Date(Number(entity.current_end) * 1000).toISOString()
-            : null,
+          currentPeriodEndsAt: currentEnd,
           razorpaySubscriptionId: entity?.id || null,
-          lastPaymentId: entity?.payment_id || null,
+          lastPaymentId: paymentId || null,
           lastEvent: eventName,
         });
+
+        if (!isInitialPayment) {
+          try {
+            await sendBillingHubPaymentEmail({
+              to: String(entity?.notes?.user_email || ''),
+              plan,
+              amount: plan === 'quarterly' ? 249 : plan === 'yearly' ? 899 : 99,
+              paymentId,
+              subscriptionId: String(entity?.id || ''),
+              nextDueAt: currentEnd,
+              isTrial: false,
+            });
+          } catch (emailError) {
+            console.error('[billing-email] Recurring payment email failed:', emailError);
+          }
+        }
       } else if (eventName === 'subscription.cancelled') {
         const r = await supabaseAdmin(
           `business_data?business_id=eq.${encodeURIComponent(businessId)}&select=payload&limit=1`

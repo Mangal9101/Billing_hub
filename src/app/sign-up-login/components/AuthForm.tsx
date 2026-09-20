@@ -220,7 +220,23 @@ export default function AuthForm() {
       localStorage.removeItem('billing_hub_pending_refresh_token_v4');
       await finishSession(accessToken, email, true, refreshToken);
     } catch (e: any) {
-      toast.error(friendlyAuthError(e, 'Unable to verify OTP. Please try again.'));
+      const friendly = friendlyAuthError(e, 'Unable to verify OTP. Please try again.');
+      const code = String(e?.code || '').toLowerCase();
+      const message = String(e?.message || '').toLowerCase();
+      const expired =
+        code === 'otp_expired' ||
+        message.includes('otp_expired') ||
+        message.includes('token has expired') ||
+        message.includes('otp has expired') ||
+        message.includes('expired or is invalid');
+
+      if (expired) {
+        otpForm.setValue('otp', '');
+        setOtpSent(false);
+        toast.error('OTP expired. Please request a new OTP and use the latest code.');
+      } else {
+        toast.error(friendly);
+      }
     } finally {
       setOtpVerifying(false);
     }

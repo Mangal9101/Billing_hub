@@ -211,6 +211,22 @@ export default function PricingPage() {
         name: 'Billing Hub',
         description: plans.find((p) => p.id === planId)?.description || 'Billing Hub plan',
         prefill: data.prefill,
+        // Keep UPI visible and prominent in Razorpay Checkout. Razorpay's
+        // Standard Checkout supports runtime payment-method configuration;
+        // the actual UPI instruments shown still depend on the merchant
+        // account's enabled payment methods.
+        config: {
+          display: {
+            blocks: {
+              billingHubUpi: {
+                name: 'UPI',
+                instruments: [{ method: 'upi' }],
+              },
+            },
+            sequence: ['block.billingHubUpi', 'card', 'netbanking', 'wallet'],
+            preferences: { show_default_blocks: true },
+          },
+        },
         theme: { color: '#7b3f18' },
         handler: async (response: any) => {
           const verify = await fetch('/api/razorpay/verify', {

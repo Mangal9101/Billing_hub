@@ -13,7 +13,7 @@ declare global {
 }
 
 const plans = [
-  { id: 'monthly', name: 'Monthly', price: '₹99', period: '/month', description: 'Flexible monthly billing', recurring: true, trial: true, features: ['7-day trial for ₹2', '₹99/month AutoPay after trial', 'All Billing Hub features'] },
+  { id: 'monthly', name: 'Monthly', price: '₹99', period: '/month', description: 'Flexible monthly billing', recurring: true, trial: false, features: ['₹99/month recurring', 'Automatic renewal', 'All Billing Hub features'] },
   { id: 'quarterly', name: '3 Months', price: '₹249', period: '/3 months', description: 'Quarterly AutoPay', recurring: true, trial: false, features: ['₹249 every 3 months', 'Automatic renewal', 'All Billing Hub features'] },
   { id: 'yearly', name: '12 Months', price: '₹899', period: '/12 months', description: 'Annual AutoPay', recurring: true, trial: false, features: ['₹899 every 12 months', 'Automatic renewal', 'All Billing Hub features'] },
   { id: 'lifetime', name: 'Lifetime', price: '₹2,499', period: ' one time', description: 'One-time payment', recurring: false, trial: false, features: ['No recurring payment', 'Lifetime access', 'All Billing Hub features'] },
@@ -54,7 +54,7 @@ export default function PricingPage() {
       const r = await fetch(endpoint, {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planId, trial: planId === 'monthly' }),
+        body: JSON.stringify({ plan: planId }),
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data?.error || 'Unable to start payment.');
@@ -74,18 +74,6 @@ export default function PricingPage() {
         description: plans.find((p) => p.id === planId)?.description || 'Billing Hub plan',
         prefill: data.prefill,
         theme: { color: '#7b3f18' },
-        config: {
-          display: {
-            blocks: {
-              upi: {
-                name: 'Pay via UPI',
-                instruments: [{ method: 'upi' }],
-              },
-            },
-            sequence: ['block.upi', 'card', 'netbanking'],
-            preferences: { show_default_blocks: true },
-          },
-        },
         handler: async (response: any) => {
           const verify = await fetch('/api/razorpay/verify', {
             method: 'POST',
@@ -141,7 +129,7 @@ export default function PricingPage() {
                 <div className="mt-5"><span className="text-3xl font-bold text-foreground">{plan.price}</span><span className="text-xs text-muted-foreground">{plan.period}</span></div>
                 <div className="mt-4 space-y-2 flex-1">{plan.features.map((f) => <div key={f} className="flex gap-2 text-sm text-muted-foreground"><Check size={16} className="text-green-600 mt-0.5 flex-shrink-0"/><span>{f}</span></div>)}</div>
                 <button onClick={() => void openCheckout(plan.id)} disabled={!!loading} className="btn-primary w-full mt-6 flex items-center justify-center gap-2 py-2.5">
-                  {busy ? <><Loader2 size={16} className="animate-spin"/>Processing...</> : plan.id === 'lifetime' ? 'Buy Lifetime' : plan.trial ? 'Start 7-Day Trial' : `Choose ${plan.name}`}
+                  {busy ? <><Loader2 size={16} className="animate-spin"/>Processing...</> : plan.id === 'lifetime' ? 'Buy Lifetime' : `Choose ${plan.name}`}
                 </button>
               </div>
             );

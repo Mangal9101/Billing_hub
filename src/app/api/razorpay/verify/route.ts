@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAuthUser, verifyCompanyMembership, supabaseAdmin } from '@/lib/server-supabase';
 import { verifyCheckoutSignature } from '@/lib/razorpay';
+import { sendBillingHubPaymentEmail } from '@/lib/billing-email';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,9 +61,10 @@ export async function POST(req: NextRequest) {
       }
       const isTrial = Boolean(body?.trial) && String(body?.plan || '') === 'monthly';
       const trialEndsAt = isTrial && body?.trialEndsAt ? String(body.trialEndsAt) : null;
+      const plan = String(body?.plan || 'monthly');
       const subscription = await saveSubscription(ctx.businessId, {
         status: 'active',
-        plan: String(body?.plan || 'monthly'),
+        plan,
         isTrial,
         trialEndsAt,
         autoPayCancelled: false,
@@ -70,6 +72,24 @@ export async function POST(req: NextRequest) {
         razorpaySubscriptionId: subscriptionId,
         lastPaymentId: paymentId,
       });
+
+      // Razorpay's customer notification is disabled. Billing Hub sends the
+      // branded transactional confirmation instead. Email failure must never
+      // turn a verified payment into a failed payment response.
+      try {
+        await sendBillingHubPaymentEmail({
+          to: String(ctx.user.email || ''),
+          plan,
+          amount: isTrial ? 2 : plan === 'quarterly' ? 249 : plan === 'yearly' ? 899 : 99,
+          paymentId,
+          subscriptionId,
+          nextDueAt: trialEndsAt,
+          isTrial,
+        });
+      } catch (emailError) {
+        console.error('[billing-email] Initial subscription email failed:', emailError);
+      }
+
       return NextResponse.json({ ok: true, subscription });
     }
 
@@ -88,6 +108,18 @@ export async function POST(req: NextRequest) {
       lastPaymentId: paymentId,
       lifetime: true,
     });
+
+    try {
+      await sendBillingHubPaymentEmail({
+        to: String(ctx.user.email || ''),
+        plan: 'lifetime',
+        amount: 2499,
+        paymentId,
+      });
+    } catch (emailError) {
+      console.error('[billing-email] Lifetime payment email failed:', emailError);
+    }
+
     return NextResponse.json({ ok: true, subscription });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unable to verify payment.' }, { status: 500 });

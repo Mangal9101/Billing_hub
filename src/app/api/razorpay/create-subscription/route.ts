@@ -31,6 +31,16 @@ export async function POST(req: NextRequest) {
     }
 
     const trial = plan === 'monthly';
+
+    // The ₹2 / 7-day trial is a one-time benefit per Billing Hub user.
+    // This is stored in Supabase Auth user metadata, so clearing browser
+    // storage or signing in again cannot reset the trial.
+    if (trial && ctx.user.user_metadata?.billing_hub_trial_used_at) {
+      return NextResponse.json(
+        { error: 'Your 7-day trial has already been used. Please choose a paid plan.' },
+        { status: 409 },
+      );
+    }
     const payload: Record<string, unknown> = {
       plan_id: planId,
       total_count: plan === 'monthly' ? 120 : plan === 'quarterly' ? 40 : 10,
@@ -74,6 +84,7 @@ export async function POST(req: NextRequest) {
       subscriptionId: result.id,
       plan,
       trial,
+      trialEndsAt: trial ? new Date((payload.start_at as number) * 1000).toISOString() : null,
       prefill: {
         name: ctx.user.user_metadata?.full_name || ctx.user.email?.split('@')[0] || '',
         email: ctx.user.email || '',

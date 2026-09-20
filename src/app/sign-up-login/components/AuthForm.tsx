@@ -371,7 +371,7 @@ export default function AuthForm() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
         <div className="w-full max-w-sm text-center">
-          <div className="flex justify-center mb-5 text-foreground"><AppLogo size={56} showBrandName className="rounded-2xl bg-white p-2 shadow-md" /></div>
+          <div className="flex justify-center mb-5 text-foreground"><AppLogo size={56} showBrandName /></div>
           <div className="flex justify-center mb-4"><Loader2 size={28} className="animate-spin text-primary" /></div>
           <h2 className="text-xl font-semibold text-foreground">Signing you in...</h2>
           <p className="text-sm text-muted-foreground mt-1">Please wait while we securely complete your Google sign-in.</p>
@@ -410,7 +410,7 @@ export default function AuthForm() {
 
       <div className="flex-1 flex flex-col justify-center px-6 sm:px-10 lg:px-14 xl:px-20 py-10 bg-background overflow-y-auto">
         <div className="w-full max-w-md mx-auto">
-          <div className="flex justify-center mb-8 lg:hidden text-foreground"><AppLogo size={40} showBrandName className="rounded-2xl bg-white p-2 shadow-md" /></div>
+          <div className="flex justify-center mb-8 lg:hidden text-foreground"><AppLogo size={40} showBrandName /></div>
 
           {mode === 'otp' ? (
             <OtpPanel otpForm={otpForm} onVerifyOtp={onVerifyOtp} onSendOtp={onSendOtp} otpSent={otpSent} otpCooldown={otpCooldown} otpSending={otpSending} otpVerifying={otpVerifying} onBack={() => { setMode('login'); setOtpSent(false); }} />

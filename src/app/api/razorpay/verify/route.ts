@@ -44,30 +44,6 @@ async function saveSubscription(businessId: string, patch: Record<string, unknow
   return next.subscription;
 }
 
-async function markTrialUsed(userId: string, existingMetadata: Record<string, unknown> = {}) {
-  const response = await fetch(
-    process.env.NEXT_PUBLIC_SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(userId),
-    {
-      method: 'PUT',
-      headers: {
-        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-        Authorization: 'Bearer ' + (process.env.SUPABASE_SERVICE_ROLE_KEY || ''),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        user_metadata: {
-          ...existingMetadata,
-          billing_hub_trial_used_at: new Date().toISOString(),
-        },
-      }),
-      cache: 'no-store',
-    },
-  );
-  if (!response.ok) {
-    throw new Error('Unable to record trial usage. Please contact support before retrying the trial.');
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const ctx = await paymentContext(req);
@@ -90,10 +66,10 @@ export async function POST(req: NextRequest) {
         isTrial,
         trialEndsAt,
         autoPayCancelled: false,
+        trialUsedAt: isTrial ? new Date().toISOString() : undefined,
         razorpaySubscriptionId: subscriptionId,
         lastPaymentId: paymentId,
       });
-      if (isTrial) await markTrialUsed(ctx.user.id, ctx.user.user_metadata || {});
       return NextResponse.json({ ok: true, subscription });
     }
 

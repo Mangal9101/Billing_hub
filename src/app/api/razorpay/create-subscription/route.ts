@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
 
     const trial = plan === 'monthly';
 
-    // The ₹2 / 7-day trial is a one-time benefit per Billing Hub user.
-    // This is stored in Supabase Auth user metadata, so clearing browser
-    // storage or signing in again cannot reset the trial.
+    // The ₹2 / 7-day trial is one-time for the account/business.
+    // trialUsedAt survives browser/session resets and remains on the
+    // subscription payload even after cancellation or later paid plans.
     if (trial) {
       const existing = await supabaseAdmin(
         `business_data?business_id=eq.${encodeURIComponent(ctx.businessId)}&select=payload&limit=1`

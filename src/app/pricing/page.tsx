@@ -49,6 +49,8 @@ export default function PricingPage() {
   }, [session?.accessToken]);
 
   const currentPlan = plans.find((p) => p.id === status?.plan);
+  // Keep the Monthly card mounted at all times. Its price is resolved from the server
+  // so a refresh can never make the card appear/disappear while auth status loads.
   const visiblePlans = plans;
   const formatDate = (value: unknown) => {
     if (!value) return 'Not available';
@@ -300,10 +302,10 @@ export default function PricingPage() {
               <div key={plan.id} onClick={() => setSelectedPlan(plan.id)} className={`rounded-2xl border ${selectedPlan === plan.id ? 'border-primary shadow-lg' : 'border-border'} bg-card p-5 flex flex-col cursor-pointer transition-colors`}>
                 {plan.id === 'monthly' && <div className="text-[10px] uppercase tracking-widest text-primary font-bold mb-3">Start here</div>}
                 <div className="flex items-center gap-2"><div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">{plan.id === 'lifetime' ? <Crown size={18}/> : <CreditCard size={18}/>}</div><div><h2 className="font-semibold text-foreground">{plan.name}</h2><p className="text-xs text-muted-foreground">{plan.description}</p></div></div>
-                <div className="mt-5"><span className="text-3xl font-bold text-foreground">{plan.id === 'monthly' && trialEligible === false ? '₹99' : plan.price}</span><span className="text-xs text-muted-foreground">{plan.id === 'monthly' && trialEligible === false ? ' / month' : plan.period}</span></div>
-                <div className="mt-4 space-y-2 flex-1">{(plan.id === 'monthly' && trialEligible === false ? ['₹99/month subscription', 'Automatic renewal', 'All Billing Hub features'] : plan.features).map((f) => <div key={f} className="flex gap-2 text-sm text-muted-foreground"><Check size={16} className="text-green-600 mt-0.5 flex-shrink-0"/><span>{f}</span></div>)}</div>
-                <button onClick={() => void openCheckout(plan.id)} disabled={!!loading} className="btn-primary w-full mt-6 flex items-center justify-center gap-2 py-2.5">
-                  {busy ? <><Loader2 size={16} className="animate-spin"/>Processing...</> : plan.id === 'lifetime' ? 'Buy Lifetime' : plan.id === 'monthly' && trialEligible === false ? 'Choose Monthly' : `Choose ${plan.name}`}
+                <div className="mt-5"><span className="text-3xl font-bold text-foreground">{plan.id === 'monthly' && trialEligible === null ? '—' : plan.id === 'monthly' && trialEligible === false ? '₹99' : plan.price}</span><span className="text-xs text-muted-foreground">{plan.id === 'monthly' && trialEligible === null ? ' checking...' : plan.id === 'monthly' && trialEligible === false ? ' / month' : plan.period}</span></div>
+                <div className="mt-4 space-y-2 flex-1">{(plan.id === 'monthly' && trialEligible === null ? ['Checking account eligibility…'] : plan.id === 'monthly' && trialEligible === false ? ['₹99/month subscription', 'Automatic renewal', 'All Billing Hub features'] : plan.features).map((f) => <div key={f} className="flex gap-2 text-sm text-muted-foreground"><Check size={16} className="text-green-600 mt-0.5 flex-shrink-0"/><span>{f}</span></div>)}</div>
+                <button onClick={() => void openCheckout(plan.id)} disabled={!!loading || (plan.id === 'monthly' && trialEligible === null)} className="btn-primary w-full mt-6 flex items-center justify-center gap-2 py-2.5">
+                  {busy ? <><Loader2 size={16} className="animate-spin"/>Processing...</> : plan.id === 'lifetime' ? 'Buy Lifetime' : plan.id === 'monthly' && trialEligible === null ? 'Checking...' : plan.id === 'monthly' && trialEligible === false ? 'Choose Monthly' : `Choose ${plan.name}`}
                 </button>
               </div>
             );

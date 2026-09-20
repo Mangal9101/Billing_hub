@@ -39,18 +39,45 @@ export async function POST(req: NextRequest) {
     // trialUsedAt survives browser/session resets and remains on the
     // subscription payload even after cancellation or later paid plans.
     if (trial) {
-      const existing = await supabaseAdmin(
-        `business_data?business_id=eq.${encodeURIComponent(ctx.businessId)}&select=payload&limit=1`
+      // Enforce the trial once per account, not once per browser or business.
+      // We inspect every business owned by this authenticated user and keep
+      // trialUsedAt on the business_data subscription payload.
+      const owned = await supabaseAdmin(
+        `businesses?owner_id=eq.${encodeURIComponent(ctx.user.id)}&select=id`
       );
-      if (existing.ok) {
-        const rows = await existing.json().catch(() => []);
-        const trialUsedAt = rows?.[0]?.payload?.subscription?.trialUsedAt;
-        if (trialUsedAt) {
-          return NextResponse.json(
-            { error: 'Your 7-day trial has already been used. Please choose a paid plan.' },
-            { status: 409 },
-          );
-        }
+      if (!owned.ok) {
+        return NextResponse.json(
+          { error: 'Unable to verify trial eligibility. Please try again.' },
+          { status: 503 },
+        );
+      }
+
+      const ownedRows = await owned.json().catch(() => []);
+      const businessIds = Array.from(new Set([
+        ctx.businessId,
+        ...(Array.isArray(ownedRows) ? ownedRows.map((row: any) => String(row?.id || '')).filter(Boolean) : []),
+      ]));
+
+      const inList = businessIds.join(',');
+      const existing = await supabaseAdmin(
+        `business_data?business_id=in.(${inList})&select=business_id,payload`
+      );
+      if (!existing.ok) {
+        return NextResponse.json(
+          { error: 'Unable to verify trial eligibility. Please try again.' },
+          { status: 503 },
+        );
+      }
+
+      const rows = await existing.json().catch(() => []);
+      const trialAlreadyUsed = Array.isArray(rows)
+        && rows.some((row: any) => Boolean(row?.payload?.subscription?.trialUsedAt));
+
+      if (trialAlreadyUsed) {
+        return NextResponse.json(
+          { error: 'Your 7-day trial has already been used. Please choose a paid plan.' },
+          { status: 409 },
+        );
       }
     }
     const payload: Record<string, unknown> = {

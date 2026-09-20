@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAuthUser, getOwnerBusinessId } from '@/lib/server-supabase';
+import { supabaseAuthUser, verifyCompanyMembership, supabaseAdmin } from '@/lib/server-supabase';
 import { RAZORPAY_KEY_ID, RAZORPAY_PLAN_IDS, razorpayRequest } from '@/lib/razorpay';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,10 @@ function bearer(req: NextRequest) {
 async function context(req: NextRequest) {
   const user = await supabaseAuthUser(bearer(req));
   if (!user?.id) return null;
-  return { user, businessId: getOwnerBusinessId(String(user.id)) };
+  const membership = await verifyCompanyMembership(String(user.id));
+  const businessId = String((membership as any)?.business_id || '');
+  if (!businessId) return null;
+  return { user, businessId };
 }
 
 export async function POST(req: NextRequest) {
@@ -35,11 +38,20 @@ export async function POST(req: NextRequest) {
     // The ₹2 / 7-day trial is a one-time benefit per Billing Hub user.
     // This is stored in Supabase Auth user metadata, so clearing browser
     // storage or signing in again cannot reset the trial.
-    if (trial && ctx.user.user_metadata?.billing_hub_trial_used_at) {
-      return NextResponse.json(
-        { error: 'Your 7-day trial has already been used. Please choose a paid plan.' },
-        { status: 409 },
+    if (trial) {
+      const existing = await supabaseAdmin(
+        `business_data?business_id=eq.${encodeURIComponent(ctx.businessId)}&select=payload&limit=1`
       );
+      if (existing.ok) {
+        const rows = await existing.json().catch(() => []);
+        const trialUsedAt = rows?.[0]?.payload?.subscription?.trialUsedAt;
+        if (trialUsedAt) {
+          return NextResponse.json(
+            { error: 'Your 7-day trial has already been used. Please choose a paid plan.' },
+            { status: 409 },
+          );
+        }
+      }
     }
     const payload: Record<string, unknown> = {
       plan_id: planId,

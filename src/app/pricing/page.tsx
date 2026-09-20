@@ -96,9 +96,10 @@ export default function PricingPage() {
   }, [session?.accessToken, session?.companyId]);
 
   const currentPlan = plans.find((p) => p.id === status?.plan);
+  const isLifetimePlan = status?.lifetime === true || String(status?.plan || '').toLowerCase() === 'lifetime';
   // Trial is its own card. It is removed permanently once the server says the
   // account has already used a trial; Monthly and every paid plan stay independent.
-  const visiblePlans = !statusLoaded
+  const visiblePlans = !statusLoaded || isLifetimePlan
     ? []
     : trialEligible === false
       ? plans.filter((p) => p.id !== 'trial')

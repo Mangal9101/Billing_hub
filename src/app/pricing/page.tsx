@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Check, Crown, Loader2, CreditCard, ShieldCheck, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { getSession, clearSession } from '@/lib/auth';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 declare global {
   interface Window {
@@ -23,6 +23,7 @@ export default function PricingPage() {
   const [loading, setLoading] = useState('');
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [status, setStatus] = useState<any>(null);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const showSignOut = searchParams.get('from') === 'login';
   const session = getSession();
@@ -113,8 +114,25 @@ export default function PricingPage() {
             razorpaySubscriptionId: response?.razorpay_subscription_id,
             razorpayOrderId: response?.razorpay_order_id,
           });
-          toast.success('Payment successful. Your Billing Hub plan is active.');
+          try {
+            if (session.companyId) {
+              sessionStorage.setItem(
+                'billing_hub_subscription_cache_v1',
+                JSON.stringify({ companyId: session.companyId, subscription: {
+                  plan: planId,
+                  status: 'active',
+                  lifetime: planId === 'lifetime',
+                  updatedAt: new Date().toISOString(),
+                  lastPaymentId: response?.razorpay_payment_id,
+                  razorpaySubscriptionId: response?.razorpay_subscription_id,
+                  razorpayOrderId: response?.razorpay_order_id,
+                }, cachedAt: Date.now() })
+              );
+            }
+          } catch {}
+          toast.success('Payment successful. Opening Dashboard...');
           setLoading('');
+          router.replace('/');
         },
         modal: { ondismiss: () => setLoading('') },
       };

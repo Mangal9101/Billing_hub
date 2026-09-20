@@ -62,17 +62,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
           // Sign in -> Pricing -> Sign out -> Sign in -> Back -> Pricing.
           if (!cancelled) setAllowed(true);
 
-          if (s?.accessToken && s.companyId) {
-            void fetch('/api/razorpay/status', {
-              headers: { Authorization: `Bearer ${s.accessToken}` },
-              cache: 'no-store',
-            })
-              .then((response) => response.json().catch(() => ({})))
-              .then((json) => {
-                if (!cancelled && isSubscriptionActive(json?.subscription)) router.replace('/');
-              })
-              .catch(() => {});
-          }
+          // /pricing is also the owner's Plans & Billing page.
+          // Keep it reachable from the sidebar even when a subscription is active.
+          // Subscription status is shown by PricingPage itself.
           return;
         }
 

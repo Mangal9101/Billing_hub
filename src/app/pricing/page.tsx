@@ -5,6 +5,7 @@ import { Check, Crown, Loader2, CreditCard, ShieldCheck, LogOut } from 'lucide-r
 import { toast } from 'sonner';
 import { getSession, clearSession } from '@/lib/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
+import AppLayout from '@/components/AppLayout';
 
 declare global {
   interface Window {
@@ -290,7 +291,8 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-full bg-background p-5 md:p-8">
+    <AppLayout activePath="/pricing">
+      <div className="min-h-full bg-background p-5 md:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="relative text-center mb-8">
           <p className="text-xs uppercase tracking-widest text-primary font-semibold">Billing Hub</p>
@@ -393,6 +395,7 @@ export default function PricingPage() {
           })}
         </div>
       </div>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

@@ -71,11 +71,11 @@ export async function POST(req: NextRequest) {
 
       const rows = await existing.json().catch(() => []);
       const trialAlreadyUsed = Array.isArray(rows)
-        && rows.some((row: any) => Boolean(row?.payload?.subscription?.trialUsedAt));
+        && rows.some((row: any) => Boolean(row?.payload?.subscription));
 
       if (trialAlreadyUsed) {
         return NextResponse.json(
-          { error: 'Your 7-day trial has already been used. Please choose a paid plan.' },
+          { error: 'The ₹2 7-day trial is available only for new accounts. Please choose a paid plan.' },
           { status: 409 },
         );
       }

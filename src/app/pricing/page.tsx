@@ -105,7 +105,7 @@ export default function PricingPage() {
           });
           const result = await verify.json().catch(() => ({}));
           if (!verify.ok) throw new Error(result?.error || 'Payment verification failed.');
-          setStatus({
+          const verifiedSubscription = result?.subscription || {
             plan: planId,
             status: 'active',
             lifetime: planId === 'lifetime',
@@ -113,26 +113,23 @@ export default function PricingPage() {
             lastPaymentId: response?.razorpay_payment_id,
             razorpaySubscriptionId: response?.razorpay_subscription_id,
             razorpayOrderId: response?.razorpay_order_id,
-          });
+          };
+          setStatus(verifiedSubscription);
           try {
             if (session.companyId) {
               sessionStorage.setItem(
                 'billing_hub_subscription_cache_v1',
-                JSON.stringify({ companyId: session.companyId, subscription: {
-                  plan: planId,
-                  status: 'active',
-                  lifetime: planId === 'lifetime',
-                  updatedAt: new Date().toISOString(),
-                  lastPaymentId: response?.razorpay_payment_id,
-                  razorpaySubscriptionId: response?.razorpay_subscription_id,
-                  razorpayOrderId: response?.razorpay_order_id,
-                }, cachedAt: Date.now() })
+                JSON.stringify({
+                  companyId: session.companyId,
+                  subscription: verifiedSubscription,
+                  cachedAt: Date.now(),
+                })
               );
             }
           } catch {}
           toast.success('Payment successful. Opening Dashboard...');
           setLoading('');
-          router.replace('/');
+          window.location.replace('/');
         },
         modal: { ondismiss: () => setLoading('') },
       };

@@ -18,9 +18,14 @@ function isSubscriptionActive(subscription: any) {
 
   // A cancelled paid subscription remains active only until the already-paid
   // period ends. A cancelled trial is stored as cancelled immediately.
-  if (subscription.autoPayCancelled && subscription.currentPeriodEndsAt) {
-    const end = new Date(String(subscription.currentPeriodEndsAt)).getTime();
-    if (Number.isFinite(end) && Date.now() >= end) return false;
+  if (subscription.autoPayCancelled) {
+    // A cancelled trial is immediately inactive. A paid subscription remains
+    // active only until the already-paid billing period ends.
+    if (subscription.isTrial) return false;
+    if (subscription.currentPeriodEndsAt) {
+      const end = new Date(String(subscription.currentPeriodEndsAt)).getTime();
+      if (Number.isFinite(end) && Date.now() >= end) return false;
+    }
   }
 
   if (subscription.isTrial && subscription.trialEndsAt) {

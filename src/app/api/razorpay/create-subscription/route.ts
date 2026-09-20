@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Razorpay plan ID for ${plan} is not configured.` }, { status: 503 });
     }
 
-    const payload = {
+    const trial = plan === 'monthly';
+    const payload: Record<string, unknown> = {
       plan_id: planId,
       total_count: plan === 'monthly' ? 120 : plan === 'quarterly' ? 40 : 10,
       quantity: 1,
@@ -42,6 +43,19 @@ export async function POST(req: NextRequest) {
         product: 'Billing Hub',
       },
     };
+
+    // Monthly: collect ₹2 upfront and start the ₹99 recurring plan after 7 days.
+    // Razorpay Subscriptions supports trial periods and upfront charges.
+    if (trial) {
+      payload.start_at = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
+      payload.addons = [{
+        item: {
+          name: 'Billing Hub 7-Day Trial',
+          amount: 200,
+          currency: 'INR',
+        },
+      }];
+    }
 
     const r = await razorpayRequest('subscriptions', {
       method: 'POST',
@@ -59,6 +73,7 @@ export async function POST(req: NextRequest) {
       keyId: RAZORPAY_KEY_ID,
       subscriptionId: result.id,
       plan,
+      trial,
       prefill: {
         name: ctx.user.user_metadata?.full_name || ctx.user.email?.split('@')[0] || '',
         email: ctx.user.email || '',

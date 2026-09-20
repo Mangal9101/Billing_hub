@@ -85,12 +85,13 @@ export async function POST(req: NextRequest) {
       plan_id: planId,
       total_count: plan === 'monthly' ? 120 : plan === 'quarterly' ? 40 : 10,
       quantity: 1,
-      customer_notify: true,
+      customer_notify: false,
       notes: {
         business_id: ctx.businessId,
         user_id: ctx.user.id,
         plan,
         product: 'Billing Hub',
+        user_email: ctx.user.email || '',
       },
     };
 

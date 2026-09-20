@@ -249,7 +249,7 @@ export default function AuthForm() {
     }
     setGoogleLoading(true);
     const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+      auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true },
     });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -278,8 +278,10 @@ export default function AuthForm() {
     }
 
     setGoogleCallbackLoading(true);
+    // Keep URL detection disabled here. With PKCE, automatic URL handling can
+    // race the explicit exchange below and consume the one-time code twice.
     const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+      auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true },
     });
 
     let finished = false;
@@ -346,10 +348,9 @@ export default function AuthForm() {
       await complete(data.session);
     };
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      void complete(session);
-    });
-
+    // One callback owner only: explicitly exchange the returned code/hash.
+    // Avoiding an auth-state listener prevents a second consumer from racing
+    // the single-use PKCE authorization code.
     void runCallback().catch(fail);
 
     const timeout = window.setTimeout(() => {
@@ -361,7 +362,7 @@ export default function AuthForm() {
 
     return () => {
       window.clearTimeout(timeout);
-      listener.subscription.unsubscribe();
+      // No auth-state listener to unsubscribe.
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

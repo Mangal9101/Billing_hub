@@ -11,7 +11,26 @@ const SUBSCRIPTION_CACHE_MS = 30_000;
 function isSubscriptionActive(subscription: any) {
   if (!subscription) return false;
   if (subscription.lifetime === true || subscription.plan === 'lifetime') return true;
-  return ['active', 'trialing'].includes(String(subscription.status || '').toLowerCase());
+
+  const status = String(subscription.status || '').toLowerCase();
+  if (!['active', 'trialing'].includes(status)) return false;
+
+  // A cancelled trial stops immediately. A cancelled paid plan remains
+  // available only until its already-paid billing period ends.
+  if (subscription.autoPayCancelled) {
+    if (subscription.isTrial) return false;
+    if (subscription.currentPeriodEndsAt) {
+      const end = new Date(String(subscription.currentPeriodEndsAt)).getTime();
+      if (Number.isFinite(end) && Date.now() >= end) return false;
+    }
+  }
+
+  if (subscription.isTrial && subscription.trialEndsAt) {
+    const end = new Date(String(subscription.trialEndsAt)).getTime();
+    if (Number.isFinite(end) && Date.now() >= end) return false;
+  }
+
+  return true;
 }
 
 function readSubscriptionCache(companyId: string) {

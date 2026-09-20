@@ -13,7 +13,7 @@ declare global {
 }
 
 const plans = [
-  { id: 'monthly', name: 'Monthly', price: '₹99', period: '/month', description: 'Flexible monthly billing', recurring: true, trial: false, features: ['₹99/month recurring', 'Automatic renewal', 'All Billing Hub features'] },
+  { id: 'monthly', name: 'Monthly', price: '₹2', period: ' / 7-day trial', description: '₹2 today, then ₹99/month', recurring: true, trial: true, features: ['₹2 for first 7 days', 'Then ₹99/month AutoPay', 'Automatic renewal', 'All Billing Hub features'] },
   { id: 'quarterly', name: '3 Months', price: '₹249', period: '/3 months', description: 'Quarterly AutoPay', recurring: true, trial: false, features: ['₹249 every 3 months', 'Automatic renewal', 'All Billing Hub features'] },
   { id: 'yearly', name: '12 Months', price: '₹899', period: '/12 months', description: 'Annual AutoPay', recurring: true, trial: false, features: ['₹899 every 12 months', 'Automatic renewal', 'All Billing Hub features'] },
   { id: 'lifetime', name: 'Lifetime', price: '₹2,499', period: ' one time', description: 'One-time payment', recurring: false, trial: false, features: ['No recurring payment', 'Lifetime access', 'All Billing Hub features'] },
@@ -54,7 +54,7 @@ export default function PricingPage() {
       const r = await fetch(endpoint, {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planId }),
+        body: JSON.stringify({ plan: planId, trial: planId === 'monthly' }),
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data?.error || 'Unable to start payment.');

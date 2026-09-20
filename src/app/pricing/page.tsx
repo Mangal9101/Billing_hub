@@ -25,6 +25,7 @@ export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [status, setStatus] = useState<any>(null);
   const [trialEligible, setTrialEligible] = useState<boolean | null>(null);
+  const [statusLoaded, setStatusLoaded] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const showSignOut = searchParams.get('from') === 'login';
@@ -39,20 +40,71 @@ export default function PricingPage() {
   }, []);
 
   useEffect(() => {
-    if (!session?.accessToken) return;
-    fetch('/api/razorpay/status', { headers: { Authorization: `Bearer ${session.accessToken}` }, cache: 'no-store' })
+    if (!session?.accessToken) {
+      setStatusLoaded(true);
+      return;
+    }
+
+    let cancelled = false;
+
+    // Restore the last confirmed subscription immediately so refreshes do not
+    // briefly hide/show the Current Plan card or the Trial card.
+    try {
+      const raw = sessionStorage.getItem('billing_hub_subscription_cache_v1');
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (!cached?.companyId || cached.companyId === session.companyId) {
+          if (!cancelled && cached?.subscription) {
+            setStatus(cached.subscription);
+            setTrialEligible(false);
+          }
+        }
+      }
+    } catch {}
+
+    fetch('/api/razorpay/status', {
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+      cache: 'no-store',
+    })
       .then((r) => r.json())
       .then((j) => {
-        setStatus(j.subscription || null);
+        if (cancelled) return;
+        const nextSubscription = j.subscription || null;
+        setStatus(nextSubscription);
         setTrialEligible(j.trialEligible !== false);
+        try {
+          if (session.companyId) {
+            sessionStorage.setItem(
+              'billing_hub_subscription_cache_v1',
+              JSON.stringify({
+                companyId: session.companyId,
+                subscription: nextSubscription,
+                cachedAt: Date.now(),
+              })
+            );
+          }
+        } catch {}
       })
-      .catch(() => {});
-  }, [session?.accessToken]);
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setStatusLoaded(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.accessToken, session?.companyId]);
 
   const currentPlan = plans.find((p) => p.id === status?.plan);
   // Trial is its own card. It is removed permanently once the server says the
   // account has already used a trial; Monthly and every paid plan stay independent.
-  const visiblePlans = trialEligible === false ? plans.filter((p) => p.id !== 'trial') : trialEligible === true ? plans : plans.filter((p) => p.id !== 'trial');
+  const visiblePlans = !statusLoaded
+    ? []
+    : trialEligible === false
+      ? plans.filter((p) => p.id !== 'trial')
+      : trialEligible === true
+        ? plans
+        : plans.filter((p) => p.id !== 'trial');
   const formatDate = (value: unknown) => {
     if (!value) return 'Not available';
     const date = new Date(String(value));

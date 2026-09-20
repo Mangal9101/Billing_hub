@@ -2,7 +2,7 @@ import { imageHosts } from './image-hosts.config.mjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false,
   distDir: process.env.DIST_DIR || '.next',
   typescript: {
     ignoreBuildErrors: true,
@@ -12,8 +12,8 @@ const nextConfig = {
   },
   images: {
     remotePatterns: imageHosts,
-    minimumCacheTTL: 60,
-    qualities: [75, 85, 100],
+    minimumCacheTTL: 86400,
+    qualities: [75],
   },
   webpack(
     config,

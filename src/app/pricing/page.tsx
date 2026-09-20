@@ -62,6 +62,57 @@ export default function PricingPage() {
     return date;
   })();
 
+  const cancelAutoPay = async () => {
+    if (!session?.accessToken || !status?.razorpaySubscriptionId) return;
+    const confirmed = window.confirm(
+      status?.isTrial
+        ? 'Cancel the 7-day trial now? Access will stop immediately and the ₹2 trial cannot be used again.'
+        : 'Cancel AutoPay? Your current paid access will remain active until the current billing period ends.'
+    );
+    if (!confirmed) return;
+
+    setLoading('cancel');
+    try {
+      const response = await fetch('/api/razorpay/cancel', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.error || 'Unable to cancel AutoPay.');
+
+      setStatus(result?.subscription || null);
+      try {
+        if (session.companyId) {
+          sessionStorage.setItem(
+            'billing_hub_subscription_cache_v1',
+            JSON.stringify({
+              companyId: session.companyId,
+              subscription: result?.subscription,
+              cachedAt: Date.now(),
+            })
+          );
+        }
+      } catch {}
+
+      if (result?.subscription?.isTrial) {
+        toast.success('Trial cancelled. Access is now stopped.');
+      } else {
+        toast.success(
+          result?.accessUntil
+            ? `AutoPay cancelled. Access remains active until ${formatDate(result.accessUntil)}.`
+            : 'AutoPay cancelled. Current paid access remains active until expiry.'
+        );
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Unable to cancel AutoPay.');
+    } finally {
+      setLoading('');
+    }
+  };
+
   const openCheckout = async (planId: string) => {
     if (!session?.accessToken) {
       toast.error('Please sign in first.');
@@ -195,6 +246,34 @@ export default function PricingPage() {
                 <p className="mt-1 font-semibold text-foreground">{status?.lifetime ? 'Lifetime — No expiry' : formatDate(nextBillingDate)}</p>
               </div>
             </div>
+
+            {status?.autoPayCancelled && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-800">
+                  AutoPay cancelled
+                </p>
+                <p className="mt-1 text-xs text-amber-700">
+                  {status?.isTrial
+                    ? 'Trial access has ended immediately. Your ₹2 trial cannot be used again.'
+                    : status?.currentPeriodEndsAt
+                      ? `Paid access remains active until ${formatDate(status.currentPeriodEndsAt)}.`
+                      : 'Your current paid access remains active until the paid period ends.'}
+                </p>
+              </div>
+            )}
+
+            {!status?.autoPayCancelled && status?.razorpaySubscriptionId && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => void cancelAutoPay()}
+                  disabled={loading === 'cancel'}
+                  className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                >
+                  {loading === 'cancel' ? 'Cancelling AutoPay...' : 'Cancel AutoPay'}
+                </button>
+              </div>
+            )}
 
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-border p-4">

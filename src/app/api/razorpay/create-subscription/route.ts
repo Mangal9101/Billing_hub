@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Razorpay plan ID for ${plan} is not configured.` }, { status: 503 });
     }
 
-    const trial = plan === 'monthly';
+    // Monthly is ₹2 trial only for eligible new accounts; existing accounts use the normal ₹99/month subscription.
+    const trial = plan === 'monthly' && body?.trial === true;
 
     // The ₹2 / 7-day trial is one-time for the account/business.
     // trialUsedAt survives browser/session resets and remains on the

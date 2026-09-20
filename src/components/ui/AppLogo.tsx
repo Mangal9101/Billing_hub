@@ -14,7 +14,7 @@ interface AppLogoProps {
 }
 
 const AppLogo = memo(function AppLogo({
-  src = '/icon-512.png',
+  src = '/assets/images/app_logo.png',
   iconName = 'SparklesIcon',
   size = 64,
   className = '',
@@ -31,14 +31,14 @@ const AppLogo = memo(function AppLogo({
   return (
     <div className={containerClassName} onClick={onClick}>
       {src ? (
-        <AppImage
+        <img
           src={src}
           alt="Billing Hub logo"
           width={size}
           height={size}
-          className="flex-shrink-0"
-          priority={true}
-          unoptimized={src.endsWith('.svg')}
+          className="flex-shrink-0 object-contain"
+          loading="eager"
+          decoding="async"
         />
       ) : (
         <AppIcon name={iconName} size={size} className="flex-shrink-0" />

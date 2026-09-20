@@ -55,7 +55,13 @@ export default function AuthForm() {
       body: JSON.stringify(body),
     });
     const json = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(json?.msg || json?.message || json?.error_description || 'Authentication failed');
+    if (!r.ok) {
+      const error = new Error(json?.msg || json?.message || json?.error_description || 'Authentication failed') as Error & { code?: string; status?: number; name?: string };
+      error.code = json?.code || json?.error_code;
+      error.status = r.status;
+      error.name = json?.name || error.name;
+      throw error;
+    }
     return json;
   };
 
@@ -144,7 +150,7 @@ export default function AuthForm() {
       setMode('otp');
       toast.success('8-digit verification OTP sent to your email');
     } catch (e: any) {
-      toast.error(e?.message || 'Unable to send email OTP');
+      toast.error(friendlyAuthError(e, 'Unable to send email OTP. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -165,10 +171,35 @@ export default function AuthForm() {
       await sendOtp(email);
       toast.success('8-digit OTP sent to your email address');
     } catch (e: any) {
-      toast.error(e?.message || 'Unable to send OTP');
+      toast.error(friendlyAuthError(e, 'Unable to send OTP. Please try again.'));
     } finally {
       setOtpSending(false);
     }
+  };
+
+  const friendlyAuthError = (error: any, fallback: string) => {
+    const code = String(error?.code || '').toLowerCase();
+    const message = String(error?.message || '').toLowerCase();
+
+    if (code === 'otp_expired' || message.includes('otp_expired') || message.includes('token has expired') || message.includes('otp has expired')) {
+      return 'OTP expired. Please request a new OTP.';
+    }
+    if (code === 'invalid_credentials' || code === 'invalid_otp' || message.includes('invalid otp') || message.includes('invalid token') || message.includes('token is invalid')) {
+      return 'Invalid OTP. Please check the code and try again.';
+    }
+    if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || error?.status === 429 || message.includes('rate limit') || message.includes('too many requests')) {
+      return 'Too many attempts. Please wait a moment and try again.';
+    }
+    if (code === 'otp_disabled') {
+      return 'Email OTP login is currently unavailable. Please try again later.';
+    }
+    if (code === 'bad_code_verifier' || code === 'bad_oauth_callback' || code === 'bad_oauth_state') {
+      return 'Secure sign-in could not be completed. Please start the login again.';
+    }
+    if (error instanceof TypeError || message.includes('failed to fetch') || message.includes('network')) {
+      return 'Network error. Please check your internet connection and try again.';
+    }
+    return fallback;
   };
 
   const onVerifyOtp = async (data: OtpFormData) => {
@@ -189,7 +220,7 @@ export default function AuthForm() {
       localStorage.removeItem('billing_hub_pending_refresh_token_v4');
       await finishSession(accessToken, email, true, refreshToken);
     } catch (e: any) {
-      toast.error(e?.message || 'Invalid or expired OTP');
+      toast.error(friendlyAuthError(e, 'Unable to verify OTP. Please try again.'));
     } finally {
       setOtpVerifying(false);
     }
@@ -213,7 +244,7 @@ export default function AuthForm() {
     });
     if (error) {
       setGoogleLoading(false);
-      toast.error(error.message || 'Google sign-in failed');
+      toast.error(friendlyAuthError(error, 'Google sign-in could not be completed. Please try again.'));
     }
   };
 
@@ -245,7 +276,7 @@ export default function AuthForm() {
         await finishSession(session.access_token, session.user?.email, false, session.refresh_token);
       } catch (e: any) {
         window.history.replaceState({}, document.title, window.location.pathname);
-        toast.error(e?.message || 'Google sign-in failed');
+        toast.error(friendlyAuthError(e, 'Google sign-in could not be completed. Please try again.'));
       } finally {
         setGoogleCallbackLoading(false);
       }
@@ -255,7 +286,7 @@ export default function AuthForm() {
       if (finished) return;
       window.history.replaceState({}, document.title, window.location.pathname);
       setGoogleCallbackLoading(false);
-      toast.error(error?.message || 'Google sign-in failed');
+      toast.error(friendlyAuthError(error, 'Google sign-in could not be completed. Please try again.'));
     };
 
     const completeFromHash = async () => {

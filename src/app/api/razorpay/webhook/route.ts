@@ -45,13 +45,56 @@ export async function POST(req: NextRequest) {
         await saveByBusinessId(businessId, {
           status: 'active',
           plan: String(entity?.notes?.plan || 'monthly'),
+          isTrial: false,
+          autoPayCancelled: false,
+          currentPeriodEndsAt: entity?.current_end
+            ? new Date(Number(entity.current_end) * 1000).toISOString()
+            : null,
           razorpaySubscriptionId: entity?.id || null,
           lastPaymentId: entity?.payment_id || null,
           lastEvent: eventName,
         });
-      } else if (eventName === 'subscription.cancelled' || eventName === 'subscription.completed') {
+      } else if (eventName === 'subscription.cancelled') {
+        const r = await supabaseAdmin(
+          `business_data?business_id=eq.${encodeURIComponent(businessId)}&select=payload&limit=1`
+        );
+        const rows = await r.json().catch(() => []);
+        const current = rows?.[0]?.payload?.subscription || {};
+        const isTrial = current?.isTrial === true;
+
+        if (isTrial) {
+          // Cancelling AutoPay during the ₹2 trial also cancels the trial
+          // immediately. The user must never be able to restart that trial.
+          await saveByBusinessId(businessId, {
+            status: 'cancelled',
+            isTrial: true,
+            autoPayCancelled: true,
+            cancelledAt: new Date().toISOString(),
+            trialEndsAt: new Date().toISOString(),
+            razorpaySubscriptionId: entity?.id || current?.razorpaySubscriptionId || null,
+            lastEvent: eventName,
+          });
+        } else {
+          // A paid period has already been purchased. Cancelling AutoPay
+          // stops the next renewal but keeps access until the paid period ends.
+          const currentEnd = entity?.current_end
+            ? new Date(Number(entity.current_end) * 1000).toISOString()
+            : current?.currentPeriodEndsAt || null;
+
+          await saveByBusinessId(businessId, {
+            status: 'active',
+            isTrial: false,
+            autoPayCancelled: true,
+            cancelledAt: new Date().toISOString(),
+            currentPeriodEndsAt: currentEnd,
+            razorpaySubscriptionId: entity?.id || current?.razorpaySubscriptionId || null,
+            lastEvent: eventName,
+          });
+        }
+      } else if (eventName === 'subscription.completed') {
         await saveByBusinessId(businessId, {
           status: 'cancelled',
+          autoPayCancelled: true,
           razorpaySubscriptionId: entity?.id || null,
           lastEvent: eventName,
         });

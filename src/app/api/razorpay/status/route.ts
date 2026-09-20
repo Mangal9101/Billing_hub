@@ -109,6 +109,9 @@ export async function GET(req: NextRequest) {
       subscription,
       businessId,
       active: isSubscriptionActive(subscription),
+      // The ₹2 trial is a new-account offer only. Once an account has any
+      // subscription record, do not show the trial offer again.
+      trialEligible: !subscription,
     });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unable to load subscription status.' }, { status: 500 });

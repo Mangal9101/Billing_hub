@@ -12,7 +12,23 @@ function bearer(req: NextRequest) {
 function isSubscriptionActive(subscription: any) {
   if (!subscription) return false;
   if (subscription.lifetime === true || String(subscription.plan || '').toLowerCase() === 'lifetime') return true;
-  return ['active', 'trialing'].includes(String(subscription.status || '').toLowerCase());
+
+  const status = String(subscription.status || '').toLowerCase();
+  if (!['active', 'trialing'].includes(status)) return false;
+
+  // A cancelled paid subscription remains active only until the already-paid
+  // period ends. A cancelled trial is stored as cancelled immediately.
+  if (subscription.autoPayCancelled && subscription.currentPeriodEndsAt) {
+    const end = new Date(String(subscription.currentPeriodEndsAt)).getTime();
+    if (Number.isFinite(end) && Date.now() >= end) return false;
+  }
+
+  if (subscription.isTrial && subscription.trialEndsAt) {
+    const end = new Date(String(subscription.trialEndsAt)).getTime();
+    if (Number.isFinite(end) && Date.now() >= end) return false;
+  }
+
+  return true;
 }
 
 export async function GET(req: NextRequest) {

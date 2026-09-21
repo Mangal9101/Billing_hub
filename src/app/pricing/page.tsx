@@ -29,6 +29,7 @@ export default function PricingPage() {
   const [statusLoaded, setStatusLoaded] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const fromSidebar = searchParams.get('from') === 'sidebar';
   const showSignOut = searchParams.get('from') === 'login';
   const session = getSession();
 
@@ -290,9 +291,8 @@ export default function PricingPage() {
     }
   };
 
-  return (
-    <AppLayout activePath="/pricing">
-      <div className="min-h-full bg-background p-5 md:p-8">
+  const content = (
+    <div className="min-h-full bg-background p-5 md:p-8">
       <div className="max-w-6xl mx-auto">
         {statusLoaded && !isLifetimePlan && (
           <div className="relative text-center mb-8">
@@ -397,7 +397,8 @@ export default function PricingPage() {
           })}
         </div>
       </div>
-      </div>
-    </AppLayout>
+    </div>
   );
+
+  return fromSidebar ? <AppLayout activePath="/pricing">{content}</AppLayout> : content;
 }

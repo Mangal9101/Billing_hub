@@ -95,8 +95,9 @@ const navItems: NavItem[] = [
   },
   {
     label: 'Plans & Billing',
-    href: '/pricing',
+    href: '/pricing?from=sidebar',
     icon: <CreditCard size={18} />,
+
     group: 'admin',
   },
 ];

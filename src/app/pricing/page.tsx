@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Check, Crown, Loader2, CreditCard, ShieldCheck, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { getSession, clearSession } from '@/lib/auth';
+import AppLayout from '@/components/AppLayout';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 declare global {
@@ -290,7 +291,8 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-full bg-background p-5 md:p-8">
+    <AppLayout activePath="/pricing">
+      <div className="min-h-full bg-background p-5 md:p-8">
       <div className="max-w-6xl mx-auto">
         {!isLifetimePlan && (
           <div className="relative text-center mb-8">
@@ -395,6 +397,6 @@ export default function PricingPage() {
           })}
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

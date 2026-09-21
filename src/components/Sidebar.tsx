@@ -272,7 +272,7 @@ export default function Sidebar({
   const isActive = (href: string) =>
     href === '/'
       ? activePath === '/'
-      : activePath.startsWith(href);
+      : activePath.startsWith(href.split('?')[0]);
 
   const switchBusiness = async (business: BusinessOption) => {
     const current = getSession();

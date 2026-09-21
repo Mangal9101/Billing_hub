@@ -294,7 +294,7 @@ export default function PricingPage() {
     <AppLayout activePath="/pricing">
       <div className="min-h-full bg-background p-5 md:p-8">
       <div className="max-w-6xl mx-auto">
-        {!isLifetimePlan && (
+        {statusLoaded && !isLifetimePlan && (
           <div className="relative text-center mb-8">
             {showSignOut && <button type="button" onClick={() => { clearSession(); window.location.href = '/sign-up-login'; }} className="absolute left-0 top-1/2 -translate-y-1/2 -scale-x-100 p-1 text-muted-foreground hover:text-foreground" title="Sign out"><LogOut size={21} strokeWidth={3}/></button>}
             <h1 className="text-3xl font-bold text-foreground">Plans & Billing</h1>

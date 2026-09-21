@@ -209,6 +209,10 @@ export default function Sidebar({
   useEffect(() => {
     if (!session?.isOwner || !session?.companyId || !session?.accessToken) return;
 
+    // Prefetch Plans & Billing too. Without this, the pricing route can wait
+    // for its JS chunk while the previous Dashboard is still visible, which
+    // causes the short Dashboard/heading flash during navigation.
+    router.prefetch('/pricing');
     router.prefetch('/staff');
 
     const key = 'billing_hub_staff_cache_' + session.companyId;

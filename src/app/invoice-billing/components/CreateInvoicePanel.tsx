@@ -302,6 +302,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
   const watchDiscountType = watch('discountType');
   const watchPaid = watch('paidAmount');
   const watchMode = watch('paymentMode');
+  const watchCustomerName = watch('customerName');
 
   const subtotal = watchItems.reduce(
     (sum, item) =>
@@ -344,7 +345,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
     }
 
     const amount = Number(paidAmt).toFixed(2);
-    const customerName = watch('customerName');
+    const customerName = watchCustomerName;
     const note = `Billing Hub${customerName ? ` - ${customerName}` : ''}`;
     const upiUri =
       `upi://pay?pa=${encodeURIComponent(BUSINESS_UPI_ID)}&pn=${encodeURIComponent(BUSINESS_UPI_NAME)}&am=${encodeURIComponent(amount)}&cu=INR&tn=${encodeURIComponent(note)}`;
@@ -364,7 +365,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [watchMode, paidAmt, watch('customerName')]);
+  }, [watchMode, paidAmt, watchCustomerName]);
 
   const filteredProducts = productCatalog.filter(
     (p) =>
@@ -1457,31 +1458,6 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
               </div>
             </div>
 
-            {watchMode === 'UPI' && paidAmt > 0 && (
-              <div className="rounded-xl border border-border bg-card p-4 flex flex-col items-center gap-3">
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-foreground">
-                    Scan to Pay
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    ₹{paidAmt.toLocaleString('en-IN')} to {BUSINESS_UPI_ID}
-                  </p>
-                </div>
-
-                {upiQrDataUrl ? (
-                  <div className="rounded-xl border border-border bg-white p-2">
-                    <img
-                      src={upiQrDataUrl}
-                      alt="UPI payment QR code"
-                      width={220}
-                      height={220}
-                      className="block w-[220px] h-[220px]"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-[220px] h-[220px] rounded-xl bg-secondary animate-pulse" />
-                )}
-
                 <p className="text-[11px] text-center text-muted-foreground">
                   Scan with any UPI app to pay directly to the business account.
                 </p>
@@ -1512,6 +1488,31 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
                 />
               </div>
             )}
+
+            {watchMode === 'UPI' && paidAmt > 0 && (
+              <div className="rounded-xl border border-border bg-card p-4 flex flex-col items-center gap-3">
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-foreground">
+                    Scan to Pay
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    ₹{paidAmt.toLocaleString('en-IN')} to {BUSINESS_UPI_ID}
+                  </p>
+                </div>
+
+                {upiQrDataUrl ? (
+                  <div className="rounded-xl border border-border bg-white p-2">
+                    <img
+                      src={upiQrDataUrl}
+                      alt="UPI payment QR code"
+                      width={220}
+                      height={220}
+                      className="block w-[220px] h-[220px]"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-[220px] h-[220px] rounded-xl bg-secondary animate-pulse" />
+                )}
 
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-secondary/50 rounded-lg p-3 text-center">

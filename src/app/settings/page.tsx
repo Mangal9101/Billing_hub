@@ -17,6 +17,7 @@ export default function SettingsPage() {
   const [upiOtpSending, setUpiOtpSending] = useState(false);
   const [upiOtpVerifying, setUpiOtpVerifying] = useState(false);
   const [pendingBusinessForm, setPendingBusinessForm] = useState<typeof form | null>(null);
+  const upiOtpRequestingRef = useRef(false);
   const ref = useRef<HTMLInputElement>(null);
   const session = getSession();
 
@@ -54,8 +55,12 @@ export default function SettingsPage() {
   };
 
   const requestUpiOtp = async (businessForm: typeof form) => {
+    if (upiOtpRequestingRef.current) return;
+    upiOtpRequestingRef.current = true;
+
     const token = await getValidAccessToken();
     if (!token) {
+      upiOtpRequestingRef.current = false;
       toast.error('Your session has expired. Please sign in again.');
       return;
     }
@@ -99,6 +104,7 @@ export default function SettingsPage() {
       toast.error(e?.message || 'Unable to send UPI confirmation OTP.');
     } finally {
       setUpiOtpSending(false);
+      upiOtpRequestingRef.current = false;
     }
   };
 
@@ -245,6 +251,15 @@ export default function SettingsPage() {
                   setUpiOtp('');
                   setUpiOtpEmail('');
                   setUpiOtpCooldown(0);
+                }}
+                onKeyDown={e => {
+                  if (e.key !== 'Enter') return;
+                  e.preventDefault();
+                  const currentUpi = (data.business.upiId || '').trim().toLowerCase();
+                  const nextUpi = form.upiId.trim().toLowerCase();
+                  if (form.upiId.trim() && currentUpi !== nextUpi && !upiOtpEmail && !upiOtpSending) {
+                    requestUpiOtp({ name: form.name, address: form.address, mobile: form.mobile, gstNumber: form.gstNumber, upiId: form.upiId });
+                  }
                 }}
                 onBlur={() => {
                   const currentUpi = (data.business.upiId || '').trim().toLowerCase();

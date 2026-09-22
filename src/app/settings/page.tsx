@@ -292,10 +292,10 @@ export default function SettingsPage() {
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">UPI ID enter karke <span className="font-medium text-foreground">Verify</span> dabayein. OTP business owner ke email par bheja jayega.</p>
 
-            {upiVerificationStarted && upiOtpEmail && (
+            {upiVerificationStarted && (
               <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3">
                 <p className="text-xs font-medium text-foreground mb-1">Verify UPI ID</p>
-                <p className="text-xs text-muted-foreground mb-2">OTP sent to <span className="font-medium text-foreground">{upiOtpEmail}</span></p>
+                <p className="text-xs text-muted-foreground mb-2">OTP sent to <span className="font-medium text-foreground">{upiOtpEmail || "business owner email"}</span></p>
                 <div className="flex gap-2">
                   <input
                     value={upiOtp}

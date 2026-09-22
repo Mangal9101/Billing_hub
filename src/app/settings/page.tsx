@@ -86,7 +86,7 @@ export default function SettingsPage() {
           json = await response.json().catch(() => ({}));
         }
       }
-      if (json?.accessToken) updateAccessToken(String(json.accessToken));
+      if (json?.accessToken) updateAccessToken(String(json.accessToken), json?.refreshToken || undefined);
       if (!response.ok) {
         const message = String(json?.error || '').toLowerCase();
         if (response.status === 429 || message.includes('rate limit') || message.includes('too many')) {

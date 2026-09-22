@@ -9,7 +9,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function SettingsPage() {
   const { data, ready, setBusiness } = useAppStore();
-  const [form, setForm] = useState({ name: '', address: '', mobile: '', gstNumber: '' });
+  const [form, setForm] = useState({ name: '', address: '', mobile: '', gstNumber: '', upiId: '' });
   const [saving, setSaving] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
   const session = getSession();
@@ -20,8 +20,9 @@ export default function SettingsPage() {
       address: data.business.address || '',
       mobile: data.business.mobile || '',
       gstNumber: data.business.gstNumber || '',
+      upiId: data.business.upiId || '',
     });
-  }, [data.business.name, data.business.address, data.business.mobile, data.business.gstNumber]);
+  }, [data.business.name, data.business.address, data.business.mobile, data.business.gstNumber, data.business.upiId]);
 
   if (!ready) return null;
 
@@ -36,6 +37,7 @@ export default function SettingsPage() {
       address: form.address.trim(),
       mobile: form.mobile.trim(),
       gstNumber: form.gstNumber.trim().toUpperCase(),
+      upiId: form.upiId.trim(),
     });
     window.setTimeout(() => {
       setSaving(false);
@@ -99,6 +101,12 @@ export default function SettingsPage() {
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">GST Number</label>
             <input className="input-field uppercase" value={form.gstNumber} onChange={e => setForm({ ...form, gstNumber: e.target.value })} placeholder="GSTIN" />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">UPI ID</label>
+            <input className="input-field" value={form.upiId} onChange={e => setForm({ ...form, upiId: e.target.value })} placeholder="yourname@upi" inputMode="email" autoCapitalize="none" autoCorrect="off" />
+            <p className="text-[10px] text-muted-foreground mt-1">This UPI ID is used for customer payment QR codes on invoices.</p>
           </div>
 
           <button className="btn-primary flex items-center justify-center gap-2" onClick={save} disabled={saving}>

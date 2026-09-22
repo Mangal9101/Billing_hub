@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useAppStore } from '@/lib/store';
-import { getSession, getValidAccessToken, refreshAccessToken } from '@/lib/auth';
+import { getSession, getValidAccessToken, refreshAccessToken, updateAccessToken } from '@/lib/auth';
 import { toast } from 'sonner';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
@@ -64,10 +64,11 @@ export default function SettingsPage() {
 
     setUpiOtpSending(true);
     try {
+      const refreshToken = getSession()?.refreshToken || localStorage.getItem('billing_hub_refresh_token_v4') || '';
       const requestOtp = (accessToken: string) =>
         fetch('/api/business/upi/request-otp', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${accessToken}`, 'X-Refresh-Token': refreshToken, 'Content-Type': 'application/json' },
         });
 
       let response = await requestOtp(token);
@@ -82,6 +83,7 @@ export default function SettingsPage() {
           json = await response.json().catch(() => ({}));
         }
       }
+      if (json?.accessToken) updateAccessToken(String(json.accessToken));
       if (!response.ok) {
         const message = String(json?.error || '').toLowerCase();
         if (response.status === 429 || message.includes('rate limit') || message.includes('too many')) {
@@ -118,12 +120,14 @@ export default function SettingsPage() {
 
     setUpiOtpVerifying(true);
     try {
+      const refreshToken = getSession()?.refreshToken || localStorage.getItem('billing_hub_refresh_token_v4') || '';
       const response = await fetch('/api/business/upi/verify-otp', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${token}`, 'X-Refresh-Token': refreshToken, 'Content-Type': 'application/json' },
         body: JSON.stringify({ otp: upiOtp }),
       });
       const json = await response.json().catch(() => ({}));
+      if (json?.accessToken) updateAccessToken(String(json.accessToken));
       if (!response.ok) {
         const message = String(json?.error || '').toLowerCase();
         if (message.includes('expired') || message.includes('otp_expired')) {

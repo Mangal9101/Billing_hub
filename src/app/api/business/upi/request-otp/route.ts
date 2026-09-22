@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAuthUser, verifyCompanyMembership, verifyBusinessOwner, supabaseAdmin, SUPABASE_ANON_KEY, SUPABASE_URL } from '@/lib/server-supabase';
+import { supabaseAuthUserWithRefresh, verifyCompanyMembership, verifyBusinessOwner, supabaseAdmin, SUPABASE_ANON_KEY, SUPABASE_URL } from '@/lib/server-supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,10 +26,12 @@ async function ownerEmailForBusiness(businessId: string, currentUser: any, role:
 export async function POST(req: NextRequest) {
   try {
     const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+    const refreshToken = (req.headers.get('x-refresh-token') || '').trim();
     if (!token) return NextResponse.json({ error: 'Authentication is required.' }, { status: 401 });
 
-    const user = await supabaseAuthUser(token);
-    if (!user?.id || !user.email) return NextResponse.json({ error: 'Invalid authentication session.' }, { status: 401 });
+    const auth = await supabaseAuthUserWithRefresh(token, refreshToken);
+    const user = auth.user;
+    if (!user?.id || !user.email) return NextResponse.json({ error: 'Invalid authentication session. Please sign in again.' }, { status: 401 });
 
     const membership = await verifyCompanyMembership(String(user.id));
     if (!membership?.business_id) return NextResponse.json({ error: 'Business membership not found.' }, { status: 403 });
@@ -65,6 +67,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
+      accessToken: auth.accessToken,
       email,
       message: 'UPI confirmation OTP sent to the business owner email.',
     });

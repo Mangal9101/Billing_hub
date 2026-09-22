@@ -333,7 +333,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
    * Invoice payments go directly to the business UPI ID.
    * Razorpay is not involved in customer invoice payments.
    */
-  const BUSINESS_UPI_ID = '9406519101-1okbizaxis';
+  const BUSINESS_UPI_ID = '9406519101-1@okbizaxis';
   const BUSINESS_UPI_NAME = 'Maa Durga Kirana Store';
 
   useEffect(() => {

@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [upiOtpCooldown, setUpiOtpCooldown] = useState(0);
   const [upiOtpSending, setUpiOtpSending] = useState(false);
   const [upiOtpVerifying, setUpiOtpVerifying] = useState(false);
+  const [upiVerificationStarted, setUpiVerificationStarted] = useState(false);
   const [pendingBusinessForm, setPendingBusinessForm] = useState<typeof form | null>(null);
   const upiOtpRequestingRef = useRef(false);
   const ref = useRef<HTMLInputElement>(null);
@@ -97,6 +98,7 @@ export default function SettingsPage() {
 
       setPendingBusinessForm(businessForm);
       setUpiOtpEmail(String(json.email || ''));
+      setUpiVerificationStarted(true);
       setUpiOtp('');
       setUpiOtpCooldown(60);
       toast.success('OTP sent to the business owner email.');
@@ -141,6 +143,7 @@ export default function SettingsPage() {
       setUpiOtp('');
       setUpiOtpEmail('');
       setUpiOtpCooldown(0);
+      setUpiVerificationStarted(false);
       const next = pendingBusinessForm;
       setPendingBusinessForm(null);
       if (next) {
@@ -251,42 +254,45 @@ export default function SettingsPage() {
                   setUpiOtp('');
                   setUpiOtpEmail('');
                   setUpiOtpCooldown(0);
+                  setUpiVerificationStarted(false);
                 }}
                 placeholder="yourname@upi"
                 inputMode="email"
                 autoCapitalize="none"
                 autoCorrect="off"
               />
-              <button
-                type="button"
-                onClick={() => {
-                  const currentUpi = (data.business.upiId || '').trim().toLowerCase();
-                  const nextUpi = form.upiId.trim().toLowerCase();
-                  if (!form.upiId.trim()) {
-                    toast.info('Pehle UPI ID enter karein.');
-                    return;
-                  }
-                  if (currentUpi === nextUpi) {
-                    toast.info('UPI ID mein koi change nahi hai.');
-                    return;
-                  }
-                  requestUpiOtp({
-                    name: form.name,
-                    address: form.address,
-                    mobile: form.mobile,
-                    gstNumber: form.gstNumber,
-                    upiId: form.upiId
-                  });
-                }}
-                disabled={upiOtpSending || !!upiOtpEmail}
-                className="btn-primary shrink-0 px-4"
-              >
-                {upiOtpSending ? 'Sending...' : upiOtpEmail ? 'OTP Sent' : 'Verify'}
-              </button>
+              {!upiVerificationStarted && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentUpi = (data.business.upiId || '').trim().toLowerCase();
+                    const nextUpi = form.upiId.trim().toLowerCase();
+                    if (!form.upiId.trim()) {
+                      toast.info('Pehle UPI ID enter karein.');
+                      return;
+                    }
+                    if (currentUpi === nextUpi) {
+                      toast.info('UPI ID mein koi change nahi hai.');
+                      return;
+                    }
+                    requestUpiOtp({
+                      name: form.name,
+                      address: form.address,
+                      mobile: form.mobile,
+                      gstNumber: form.gstNumber,
+                      upiId: form.upiId
+                    });
+                  }}
+                  disabled={upiOtpSending}
+                  className="btn-primary shrink-0 px-4"
+                >
+                  {upiOtpSending ? 'Sending...' : 'Verify'}
+                </button>
+              )}
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">UPI ID enter karke <span className="font-medium text-foreground">Verify</span> dabayein. OTP business owner ke email par bheja jayega.</p>
 
-            {upiOtpEmail && (
+            {upiVerificationStarted && upiOtpEmail && (
               <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3">
                 <p className="text-xs font-medium text-foreground mb-1">Verify UPI ID</p>
                 <p className="text-xs text-muted-foreground mb-2">OTP sent to <span className="font-medium text-foreground">{upiOtpEmail}</span></p>

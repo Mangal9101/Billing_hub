@@ -283,12 +283,14 @@ export default function PricingPage() {
   const content = (
     <div className="min-h-full bg-background p-5 md:p-8">
       <div className="max-w-6xl mx-auto">
-        {statusLoaded && !isLifetimePlan && (
+        {statusLoaded && (
           <div className="relative text-center mb-8">
             {showSignOut && <button type="button" onClick={() => { clearSession(); window.location.href = '/sign-up-login'; }} className="absolute left-0 top-1/2 -translate-y-1/2 -scale-x-100 p-1 text-muted-foreground hover:text-foreground" title="Sign out"><LogOut size={21} strokeWidth={3}/></button>}
             <h1 className="text-3xl font-bold text-foreground">Plans & Billing</h1>
-            <p className="text-sm text-muted-foreground mt-2">Choose a plan that fits your business.</p>
-            {status?.status === 'active' && <div className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-full bg-green-50 border border-green-200 text-green-700 text-sm"><ShieldCheck size={15}/> Active plan: {status.plan === 'lifetime' ? 'Lifetime' : status.plan}</div>}
+            <p className="text-sm text-muted-foreground mt-2">
+              {isLifetimePlan ? 'Your Billing Hub access is active for lifetime.' : 'Choose a plan that fits your business.'}
+            </p>
+            {status?.status === 'active' && <div className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-full bg-green-50 border border-green-200 text-green-700 text-sm"><ShieldCheck size={15}/> Current status: {status.plan === 'lifetime' ? 'Lifetime — Active' : status.plan}</div>}
           </div>
         )}
 

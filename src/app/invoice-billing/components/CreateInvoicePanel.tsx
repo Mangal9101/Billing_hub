@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import QRCode from 'qrcode';
 import { toast } from 'sonner';
 import { Plus, Trash2, Search, X, Loader2, ChevronDown } from 'lucide-react';
 import type { InvoiceRecord } from './InvoiceBillingScreen';
@@ -102,6 +103,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
     useState<React.CSSProperties>({});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [upiQrDataUrl, setUpiQrDataUrl] = useState('');
 
   const draftKeyRef = useRef<string | null>(null);
   const restoringDraftRef = useRef(false);
@@ -322,6 +324,47 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
       : Number(watchPaid) || 0;
 
   const dueAmt = Math.max(0, total - paidAmt);
+
+  /*
+   * ------------------------------------------------------------
+   * UPI QR
+   * ------------------------------------------------------------
+   * Invoice payments go directly to the business UPI ID.
+   * Razorpay is not involved in customer invoice payments.
+   */
+  const BUSINESS_UPI_ID = '9406519101-1okbizaxis';
+  const BUSINESS_UPI_NAME = 'Maa Durga Kirana Store';
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (watchMode !== 'UPI' || paidAmt <= 0) {
+      setUpiQrDataUrl('');
+      return;
+    }
+
+    const amount = Number(paidAmt).toFixed(2);
+    const customerName = watch('customerName');
+    const note = `Billing Hub${customerName ? ` - ${customerName}` : ''}`;
+    const upiUri =
+      `upi://pay?pa=${encodeURIComponent(BUSINESS_UPI_ID)}&pn=${encodeURIComponent(BUSINESS_UPI_NAME)}&am=${encodeURIComponent(amount)}&cu=INR&tn=${encodeURIComponent(note)}`;
+
+    QRCode.toDataURL(upiUri, {
+      width: 240,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+    })
+      .then((url) => {
+        if (!cancelled) setUpiQrDataUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setUpiQrDataUrl('');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [watchMode, paidAmt, watch('customerName')]);
 
   const filteredProducts = productCatalog.filter(
     (p) =>
@@ -1413,6 +1456,37 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
                 ))}
               </div>
             </div>
+
+            {watchMode === 'UPI' && paidAmt > 0 && (
+              <div className="rounded-xl border border-border bg-card p-4 flex flex-col items-center gap-3">
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-foreground">
+                    Scan to Pay
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    ₹{paidAmt.toLocaleString('en-IN')} to {BUSINESS_UPI_ID}
+                  </p>
+                </div>
+
+                {upiQrDataUrl ? (
+                  <div className="rounded-xl border border-border bg-white p-2">
+                    <img
+                      src={upiQrDataUrl}
+                      alt="UPI payment QR code"
+                      width={220}
+                      height={220}
+                      className="block w-[220px] h-[220px]"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-[220px] h-[220px] rounded-xl bg-secondary animate-pulse" />
+                )}
+
+                <p className="text-[11px] text-center text-muted-foreground">
+                  Scan with any UPI app to pay directly to the business account.
+                </p>
+              </div>
+            )}
 
             {watchMode !== 'Credit' && (
               <div>

@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
     if (!['monthly', 'quarterly', 'yearly'].includes(plan)) {
       return NextResponse.json({ error: 'Invalid subscription plan.' }, { status: 400 });
     }
+    if (body?.trial === true) {
+      return NextResponse.json({ error: 'The ₹2 7-day trial has been removed. Please choose a paid plan.' }, { status: 410 });
+    }
 
     const planId = RAZORPAY_PLAN_IDS[plan as keyof typeof RAZORPAY_PLAN_IDS];
     if (!planId) {
@@ -36,51 +39,6 @@ export async function POST(req: NextRequest) {
     // Monthly is ₹2 trial only for eligible new accounts; existing accounts use the normal ₹99/month subscription.
     const trial = plan === 'monthly' && body?.trial === true;
 
-    // The ₹2 / 7-day trial is one-time for the account/business.
-    // trialUsedAt survives browser/session resets and remains on the
-    // subscription payload even after cancellation or later paid plans.
-    if (trial) {
-      // Enforce the trial once per account, not once per browser or business.
-      // We inspect every business owned by this authenticated user and keep
-      // trialUsedAt on the business_data subscription payload.
-      const owned = await supabaseAdmin(
-        `businesses?owner_id=eq.${encodeURIComponent(ctx.user.id)}&select=id`
-      );
-      if (!owned.ok) {
-        return NextResponse.json(
-          { error: 'Unable to verify trial eligibility. Please try again.' },
-          { status: 503 },
-        );
-      }
-
-      const ownedRows = await owned.json().catch(() => []);
-      const businessIds = Array.from(new Set([
-        ctx.businessId,
-        ...(Array.isArray(ownedRows) ? ownedRows.map((row: any) => String(row?.id || '')).filter(Boolean) : []),
-      ]));
-
-      const inList = businessIds.join(',');
-      const existing = await supabaseAdmin(
-        `business_data?business_id=in.(${inList})&select=business_id,payload`
-      );
-      if (!existing.ok) {
-        return NextResponse.json(
-          { error: 'Unable to verify trial eligibility. Please try again.' },
-          { status: 503 },
-        );
-      }
-
-      const rows = await existing.json().catch(() => []);
-      const trialAlreadyUsed = Array.isArray(rows)
-        && rows.some((row: any) => Boolean(row?.payload?.subscription));
-
-      if (trialAlreadyUsed) {
-        return NextResponse.json(
-          { error: 'The ₹2 7-day trial is available only for new accounts. Please choose a paid plan.' },
-          { status: 409 },
-        );
-      }
-    }
     const payload: Record<string, unknown> = {
       plan_id: planId,
       total_count: plan === 'monthly' ? 120 : plan === 'quarterly' ? 40 : 10,
@@ -124,8 +82,8 @@ export async function POST(req: NextRequest) {
       keyId: RAZORPAY_KEY_ID,
       subscriptionId: result.id,
       plan,
-      trial,
-      trialEndsAt: trial ? new Date((payload.start_at as number) * 1000).toISOString() : null,
+      trial: false,
+      trialEndsAt: null,
       prefill: {
         name: ctx.user.user_metadata?.full_name || ctx.user.email?.split('@')[0] || '',
         email: ctx.user.email || '',

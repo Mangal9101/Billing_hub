@@ -1458,11 +1458,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
               </div>
             </div>
 
-                <p className="text-[11px] text-center text-muted-foreground">
-                  Scan with any UPI app to pay directly to the business account.
-                </p>
-              </div>
-            )}
+
 
             {watchMode !== 'Credit' && (
               <div>
@@ -1513,6 +1509,12 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
                 ) : (
                   <div className="w-[220px] h-[220px] rounded-xl bg-secondary animate-pulse" />
                 )}
+
+                <p className="text-[11px] text-center text-muted-foreground">
+                  Scan with any UPI app to pay directly to the business account.
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-secondary/50 rounded-lg p-3 text-center">

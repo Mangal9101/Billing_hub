@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Plus, Trash2, Search, X, Loader2, ChevronDown } from 'lucide-react';
 import type { InvoiceRecord } from './InvoiceBillingScreen';
@@ -113,6 +113,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
     control,
     handleSubmit,
     watch,
+    getValues,
     setValue,
     reset,
     formState: { errors },
@@ -294,7 +295,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
     };
   }, [showCustomerDropdown]);
 
-  const watchItems = watch('items');
+  const watchItems = useWatch({ control, name: 'items' }) || [];
   const watchDiscount = watch('discount');
   const watchDiscountType = watch('discountType');
   const watchPaid = watch('paidAmount');
@@ -1366,22 +1367,35 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
                     key={`paymode-${mode}`}
                     type="button"
                     onClick={() => {
-                      setValue(
-                        'paymentMode',
-                        mode,
+                      // Always read the latest form state here. This prevents a
+                      // payment-mode change from using a stale subtotal/total
+                      // after the quantity was just edited.
+                      const currentItems = getValues('items') || [];
+                      const currentDiscount = Number(getValues('discount')) || 0;
+                      const currentDiscountType = getValues('discountType');
+                      const currentSubtotal = currentItems.reduce(
+                        (sum, item) =>
+                          sum +
+                          (Number(item?.qty) * Number(item?.unitPrice) || 0),
+                        0,
+                      );
+                      const currentDiscountAmt =
+                        currentDiscountType === 'percent'
+                          ? Math.round(
+                              currentSubtotal * (currentDiscount / 100),
+                            )
+                          : currentDiscount;
+                      const currentTotal = Math.max(
+                        0,
+                        currentSubtotal - currentDiscountAmt,
                       );
 
-                      if (mode === 'Credit') {
-                        setValue(
-                          'paidAmount',
-                          0,
-                        );
-                      } else {
-                        setValue(
-                          'paidAmount',
-                          total,
-                        );
-                      }
+                      setValue('paymentMode', mode);
+
+                      setValue(
+                        'paidAmount',
+                        mode === 'Credit' ? 0 : currentTotal,
+                      );
                     }}
                     className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all duration-150
                       ${

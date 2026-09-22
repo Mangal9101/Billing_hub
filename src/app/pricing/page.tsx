@@ -14,7 +14,6 @@ declare global {
 }
 
 const plans = [
-  { id: 'trial', name: 'Trial', price: '₹2', period: ' / 7 days', description: '7-day trial, then ₹99/month', recurring: true, trial: true, features: ['₹2 today', '7-day access', 'Then ₹99/month AutoPay', 'All Billing Hub features'] },
   { id: 'monthly', name: 'Monthly', price: '₹99', period: ' / month', description: 'Monthly AutoPay', recurring: true, trial: false, features: ['₹99 every month', 'Automatic renewal', 'All Billing Hub features'] },
   { id: 'quarterly', name: '3 Months', price: '₹249', period: ' / 3 months', description: 'Quarterly AutoPay', recurring: true, trial: false, features: ['₹249 every 3 months', 'Automatic renewal', 'All Billing Hub features'] },
   { id: 'yearly', name: '12 Months', price: '₹899', period: ' / 12 months', description: 'Annual AutoPay', recurring: true, trial: false, features: ['₹899 every 12 months', 'Automatic renewal', 'All Billing Hub features'] },
@@ -25,7 +24,6 @@ export default function PricingPage() {
   const [loading, setLoading] = useState('');
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [status, setStatus] = useState<any>(null);
-  const [trialEligible, setTrialEligible] = useState<boolean | null>(null);
   const [statusLoaded, setStatusLoaded] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -58,7 +56,6 @@ export default function PricingPage() {
         if (!cached?.companyId || cached.companyId === session.companyId) {
           if (!cancelled && cached?.subscription) {
             setStatus(cached.subscription);
-            setTrialEligible(false);
           }
         }
       }
@@ -73,7 +70,6 @@ export default function PricingPage() {
         if (cancelled) return;
         const nextSubscription = j.subscription || null;
         setStatus(nextSubscription);
-        setTrialEligible(j.trialEligible !== false);
         try {
           if (session.companyId) {
             sessionStorage.setItem(
@@ -99,15 +95,7 @@ export default function PricingPage() {
 
   const currentPlan = plans.find((p) => p.id === status?.plan);
   const isLifetimePlan = status?.lifetime === true || String(status?.plan || '').toLowerCase() === 'lifetime';
-  // Trial is its own card. It is removed permanently once the server says the
-  // account has already used a trial; Monthly and every paid plan stay independent.
-  const visiblePlans = !statusLoaded || isLifetimePlan
-    ? []
-    : trialEligible === false
-      ? plans.filter((p) => p.id !== 'trial')
-      : trialEligible === true
-        ? plans
-        : plans.filter((p) => p.id !== 'trial');
+  const visiblePlans = !statusLoaded || isLifetimePlan ? [] : plans;
   const formatDate = (value: unknown) => {
     if (!value) return 'Not available';
     const date = new Date(String(value));
@@ -183,10 +171,12 @@ export default function PricingPage() {
       return;
     }
 
-    // Trial is only a separate UI offer. Razorpay still creates the monthly
-    // subscription underneath it, so the ₹99 AutoPay starts after 7 days.
-    const razorpayPlan = planId === 'trial' ? 'monthly' : planId;
-    const isTrialCheckout = planId === 'trial';
+    if (planId === 'trial') {
+      toast.error('The ₹2 trial has been removed. Please choose a paid plan.');
+      return;
+    }
+    const razorpayPlan = planId;
+    const isTrialCheckout = false;
 
     setLoading(planId);
     try {
@@ -194,7 +184,7 @@ export default function PricingPage() {
       const r = await fetch(endpoint, {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: razorpayPlan, trial: isTrialCheckout }),
+        body: JSON.stringify({ plan: razorpayPlan }),
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data?.error || 'Unable to start payment.');
@@ -237,8 +227,8 @@ export default function PricingPage() {
             body: JSON.stringify({
               type: razorpayPlan === 'lifetime' ? 'order' : 'subscription',
               plan: razorpayPlan,
-              trial: isTrialCheckout && Boolean(data?.trial),
-              trialEndsAt: data?.trialEndsAt || null,
+              trial: false,
+              trialEndsAt: null,
               ...response,
             }),
           });
@@ -255,7 +245,6 @@ export default function PricingPage() {
             razorpayOrderId: response?.razorpay_order_id,
           };
           setStatus(verifiedSubscription);
-          if (isTrialCheckout) setTrialEligible(false);
           try {
             if (session.companyId) {
               sessionStorage.setItem(
@@ -381,16 +370,14 @@ export default function PricingPage() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {visiblePlans.map((plan) => {
             const busy = loading === plan.id;
-            const isTrial = plan.id === 'trial';
             return (
               <div key={plan.id} onClick={() => setSelectedPlan(plan.id)} className={`rounded-2xl border ${selectedPlan === plan.id ? 'border-primary shadow-lg' : 'border-border'} bg-card p-5 flex flex-col cursor-pointer transition-colors`}>
-                {isTrial && <div className="text-[10px] uppercase tracking-widest text-primary font-bold mb-3">New account offer</div>}
                 {plan.id === 'monthly' && <div className="text-[10px] uppercase tracking-widest text-primary font-bold mb-3">Monthly AutoPay</div>}
                 <div className="flex items-center gap-2"><div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">{plan.id === 'lifetime' ? <Crown size={18}/> : <CreditCard size={18}/>}</div><div><h2 className="font-semibold text-foreground">{plan.name}</h2><p className="text-xs text-muted-foreground">{plan.description}</p></div></div>
                 <div className="mt-5"><span className="text-3xl font-bold text-foreground">{plan.price}</span><span className="text-xs text-muted-foreground">{plan.period}</span></div>
                 <div className="mt-4 space-y-2 flex-1">{plan.features.map((f) => <div key={f} className="flex gap-2 text-sm text-muted-foreground"><Check size={16} className="text-green-600 mt-0.5 flex-shrink-0"/><span>{f}</span></div>)}</div>
-                <button onClick={() => void openCheckout(plan.id)} disabled={!!loading || (isTrial && trialEligible !== true)} className="btn-primary w-full mt-6 flex items-center justify-center gap-2 py-2.5">
-                  {busy ? <><Loader2 size={16} className="animate-spin"/>Processing...</> : isTrial ? 'Start ₹2 Trial' : plan.id === 'lifetime' ? 'Buy Lifetime' : `Choose ${plan.name}`}
+                <button onClick={() => void openCheckout(plan.id)} disabled={!!loading} className="btn-primary w-full mt-6 flex items-center justify-center gap-2 py-2.5">
+                  {busy ? <><Loader2 size={16} className="animate-spin"/>Processing...</> : plan.id === 'lifetime' ? 'Buy Lifetime' : `Choose ${plan.name}`}
                 </button>
               </div>
             );

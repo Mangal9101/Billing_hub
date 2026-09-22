@@ -41,6 +41,22 @@ export async function GET(req: NextRequest) {
     const user = await supabaseAuthUser(bearer(req));
     if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // This account is an explicit Billing Hub Lifetime account. Resolve it
+    // before the business-membership lookup so a temporary/missing membership
+    // lookup can never hide the Lifetime status on Plans & Billing.
+    if (String(user.email || '').trim().toLowerCase() === ADMIN_EMAIL) {
+      return NextResponse.json({
+        subscription: {
+          plan: 'lifetime',
+          status: 'active',
+          lifetime: true,
+          updatedAt: new Date().toISOString(),
+        },
+        businessId: null,
+        active: true,
+      });
+    }
+
     // Subscription belongs to the business, not to an individual staff account.
     // Both owners and staff resolve to the same business_members.business_id.
     const membership = await verifyCompanyMembership(user.id);
@@ -49,17 +65,6 @@ export async function GET(req: NextRequest) {
     }
 
     const businessId = String(membership.business_id);
-
-    // The admin owner is known directly from the authenticated user. This
-    // avoids an extra businesses query + Auth Admin API call for the normal
-    // owner login path.
-    if (String(user.email || '').trim().toLowerCase() === ADMIN_EMAIL) {
-      return NextResponse.json({
-        subscription: { plan: 'lifetime', status: 'active', lifetime: true },
-        businessId,
-        active: true,
-      });
-    }
 
     // Staff accounts still need to resolve the business owner because their
     // own email is not the owner email.

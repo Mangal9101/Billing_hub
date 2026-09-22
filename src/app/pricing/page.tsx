@@ -48,6 +48,10 @@ export default function PricingPage() {
 
     let cancelled = false;
 
+    if (isAdminLifetime) {
+      setStatus({ plan: 'lifetime', status: 'active', lifetime: true, updatedAt: new Date().toISOString() });
+    }
+
     // Restore the last confirmed subscription immediately so refreshes do not
     // briefly hide/show the Current Plan card or the Trial card.
     try {
@@ -86,7 +90,11 @@ export default function PricingPage() {
           }
         } catch {}
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled && isAdminLifetime) {
+          setStatus({ plan: 'lifetime', status: 'active', lifetime: true, updatedAt: new Date().toISOString() });
+        }
+      })
       .finally(() => {
         if (!cancelled) setStatusLoaded(true);
       });

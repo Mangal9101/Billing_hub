@@ -168,7 +168,7 @@ export default function SettingsPage() {
     // authenticated email. Other business fields are saved after verification.
     if (currentUpi !== nextUpi) {
       if (!upiOtpEmail) {
-        toast.info('UPI ID verify karne ke liye pehle field se bahar aayein.');
+        toast.info('UPI ID verify karne ke liye pehle Verify button dabayein.');
         return;
       }
       if (!/^\d{6}$/.test(upiOtp)) {
@@ -252,32 +252,43 @@ export default function SettingsPage() {
                   setUpiOtpEmail('');
                   setUpiOtpCooldown(0);
                 }}
-                onKeyDown={e => {
-                  if (e.key !== 'Enter') return;
-                  e.preventDefault();
-                  const currentUpi = (data.business.upiId || '').trim().toLowerCase();
-                  const nextUpi = form.upiId.trim().toLowerCase();
-                  if (form.upiId.trim() && currentUpi !== nextUpi && !upiOtpEmail && !upiOtpSending) {
-                    requestUpiOtp({ name: form.name, address: form.address, mobile: form.mobile, gstNumber: form.gstNumber, upiId: form.upiId });
-                  }
-                }}
-                onBlur={() => {
-                  const currentUpi = (data.business.upiId || '').trim().toLowerCase();
-                  const nextUpi = form.upiId.trim().toLowerCase();
-                  if (form.upiId.trim() && currentUpi !== nextUpi && !upiOtpEmail && !upiOtpSending) {
-                    requestUpiOtp({ name: form.name, address: form.address, mobile: form.mobile, gstNumber: form.gstNumber, upiId: form.upiId });
-                  }
-                }}
                 placeholder="yourname@upi"
                 inputMode="email"
                 autoCapitalize="none"
                 autoCorrect="off"
               />
+              <button
+                type="button"
+                onClick={() => {
+                  const currentUpi = (data.business.upiId || '').trim().toLowerCase();
+                  const nextUpi = form.upiId.trim().toLowerCase();
+                  if (!form.upiId.trim()) {
+                    toast.info('Pehle UPI ID enter karein.');
+                    return;
+                  }
+                  if (currentUpi === nextUpi) {
+                    toast.info('UPI ID mein koi change nahi hai.');
+                    return;
+                  }
+                  requestUpiOtp({
+                    name: form.name,
+                    address: form.address,
+                    mobile: form.mobile,
+                    gstNumber: form.gstNumber,
+                    upiId: form.upiId
+                  });
+                }}
+                disabled={upiOtpSending || !!upiOtpEmail}
+                className="btn-primary shrink-0 px-4"
+              >
+                {upiOtpSending ? 'Sending...' : upiOtpEmail ? 'OTP Sent' : 'Verify'}
+              </button>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">UPI ID enter karke field se bahar aate hi OTP business owner ke email par bheja jayega.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">UPI ID enter karke <span className="font-medium text-foreground">Verify</span> dabayein. OTP business owner ke email par bheja jayega.</p>
 
             {upiOtpEmail && (
               <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3">
+                <p className="text-xs font-medium text-foreground mb-1">Verify UPI ID</p>
                 <p className="text-xs text-muted-foreground mb-2">OTP sent to <span className="font-medium text-foreground">{upiOtpEmail}</span></p>
                 <div className="flex gap-2">
                   <input

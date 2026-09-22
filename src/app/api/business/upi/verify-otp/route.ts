@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAuthUser, verifyCompanyMembership, verifyBusinessOwner, SUPABASE_ANON_KEY, SUPABASE_URL } from '@/lib/server-supabase';
+import { supabaseAuthUserWithRefresh, verifyCompanyMembership, verifyBusinessOwner, SUPABASE_ANON_KEY, SUPABASE_URL } from '@/lib/server-supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+    const refreshToken = (req.headers.get('x-refresh-token') || '').trim();
     const body = await req.json().catch(() => ({}));
     const otp = String(body?.otp || '').trim();
 
     if (!token) return NextResponse.json({ error: 'Authentication is required.' }, { status: 401 });
     if (!/^\d{6}$/.test(otp)) return NextResponse.json({ error: 'Enter a valid 6-digit OTP.' }, { status: 400 });
 
-    const user = await supabaseAuthUser(token);
-    if (!user?.id || !user.email) return NextResponse.json({ error: 'Invalid authentication session.' }, { status: 401 });
+    const auth = await supabaseAuthUserWithRefresh(token, refreshToken);
+    const user = auth.user;
+    if (!user?.id || !user.email) return NextResponse.json({ error: 'Invalid authentication session. Please sign in again.' }, { status: 401 });
 
     const membership = await verifyCompanyMembership(String(user.id));
     if (!membership?.business_id) return NextResponse.json({ error: 'Business membership not found.' }, { status: 403 });
@@ -74,7 +76,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'The OTP does not match the business owner email.' }, { status: 403 });
     }
 
-    return NextResponse.json({ ok: true, verified: true });
+    return NextResponse.json({ ok: true, verified: true, accessToken: auth.accessToken });
   } catch (e: any) {
     console.error('UPI OTP VERIFY ERROR:', e);
     return NextResponse.json({ error: e?.message || 'Unable to verify UPI confirmation OTP.' }, { status: 500 });

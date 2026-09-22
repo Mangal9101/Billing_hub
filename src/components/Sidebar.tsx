@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
@@ -1000,17 +999,7 @@ export default function Sidebar({
                   : undefined
               }
               className={`flex items-center gap-2.5 px-2 py-2 mb-0.5 group relative transition-all duration-150 ${
-                item.href === '/settings'
-                  ? `rounded-xl border border-primary/15 bg-primary/[0.04] shadow-sm ${
-                      isActive(item.href)
-                        ? 'bg-primary/10 text-primary font-semibold border-primary/25'
-                        : 'text-muted-foreground hover:bg-primary/[0.08] hover:text-foreground hover:border-primary/25'
-                    }`
-                  : `rounded-lg ${
-                      isActive(item.href)
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-                    }`
+                : `rounded-lg ${isActive(item.href) ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}`
               } ${
                 collapsed && !mobile
                   ? 'justify-center'

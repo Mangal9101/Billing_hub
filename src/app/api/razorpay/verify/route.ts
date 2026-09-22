@@ -60,6 +60,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid Razorpay signature.' }, { status: 400 });
       }
       const isTrial = Boolean(body?.trial) && String(body?.plan || '') === 'monthly';
+      if (isTrial) {
+        return NextResponse.json({ error: 'The ₹2 7-day trial has been removed. Please choose a paid plan.' }, { status: 410 });
+      }
       const trialEndsAt = isTrial && body?.trialEndsAt ? String(body.trialEndsAt) : null;
       const plan = String(body?.plan || 'monthly');
       const subscription = await saveSubscription(ctx.businessId, {

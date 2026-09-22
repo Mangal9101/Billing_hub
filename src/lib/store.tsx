@@ -11,13 +11,13 @@ export type LedgerEntry = { id:string; customerId:string; description:string; de
 export type PurchaseItem = { name:string; qty:number; unitPrice:number; total:number; productId?:string };
 export type Purchase = { id:string; supplier:string; phone:string; items:PurchaseItem[]; total:number; paid:number; due:number; mode:'Cash'|'UPI'|'Credit'; date:string; notes:string; };
 export type StockMovement = { id:string; productId:string; productName:string; type:'IN'|'OUT'|'ADJUSTMENT'; qty:number; reason:string; date:string; unit?:string; by?:string; refId?:string; };
-export type Business = { id:string; name:string; ownerName?:string; ownerEmail?:string; logoUrl?:string; address?:string; mobile?:string; gstNumber?:string; ownerUserId?:string; };
+export type Business = { id:string; name:string; ownerName?:string; ownerEmail?:string; logoUrl?:string; address?:string; mobile?:string; gstNumber?:string; upiId?:string; ownerUserId?:string; };
 export type ActivityCategory = 'invoice'|'products'|'khatabook';
 export type ActivityEvent = { id:string; category:ActivityCategory; message:string; timestamp:number; read:boolean; };
 export type ActivityState = { invoice:number; products:number; khatabook:number; };
 export type AppData = { business:Business; products:Product[]; customers:Customer[]; invoices:Invoice[]; ledger:LedgerEntry[]; purchases:Purchase[]; movements:StockMovement[]; activity:ActivityState; notifications:ActivityEvent[]; };
 
-const EMPTY_BUSINESS = { name:'My Business', address:'', mobile:'', gstNumber:'' };
+const EMPTY_BUSINESS = { name:'My Business', address:'', mobile:'', gstNumber:'', upiId:'' };
 const STORAGE_PREFIX = 'billing_hub_business_v4';
 const tokenKey = 'billing_hub_access_token_v4';
 

@@ -11,11 +11,9 @@ export default function SettingsPage() {
   const { data, ready, setBusiness } = useAppStore();
   const [form, setForm] = useState({ name: '', address: '', mobile: '', gstNumber: '', upiId: '' });
   const [saving, setSaving] = useState(false);
-  const [upiOtpOpen, setUpiOtpOpen] = useState(false);
   const [upiOtp, setUpiOtp] = useState('');
   const [upiOtpEmail, setUpiOtpEmail] = useState('');
   const [upiOtpCooldown, setUpiOtpCooldown] = useState(0);
-  const [upiOtpSent, setUpiOtpSent] = useState(false);
   const [upiOtpSending, setUpiOtpSending] = useState(false);
   const [upiOtpVerifying, setUpiOtpVerifying] = useState(false);
   const [pendingBusinessForm, setPendingBusinessForm] = useState<typeof form | null>(null);
@@ -95,10 +93,8 @@ export default function SettingsPage() {
       setPendingBusinessForm(businessForm);
       setUpiOtpEmail(String(json.email || ''));
       setUpiOtp('');
-      setUpiOtpSent(true);
       setUpiOtpCooldown(60);
-      setUpiOtpOpen(true);
-      toast.success('UPI confirmation OTP sent to the business owner email.');
+      toast.success('OTP sent to the business owner email.');
     } catch (e: any) {
       toast.error(e?.message || 'Unable to send UPI confirmation OTP.');
     } finally {
@@ -136,13 +132,15 @@ export default function SettingsPage() {
         throw new Error(json?.error || 'Invalid OTP. Please check the code and try again.');
       }
 
-      setUpiOtpOpen(false);
       setUpiOtp('');
       setUpiOtpEmail('');
       setUpiOtpCooldown(0);
       const next = pendingBusinessForm;
       setPendingBusinessForm(null);
-      if (next) saveBusinessDetails(next);
+      if (next) {
+        saveBusinessDetails(next);
+        toast.success('UPI ID saved successfully.');
+      }
     } catch (e: any) {
       toast.error(e?.message || 'Unable to verify OTP.');
     } finally {
@@ -163,19 +161,15 @@ export default function SettingsPage() {
     // every later change/removal require an OTP sent to the business owner's
     // authenticated email. Other business fields are saved after verification.
     if (currentUpi !== nextUpi) {
-      if (upiOtpCooldown > 0 && !upiOtpOpen) {
-        toast.info(`Please wait ${upiOtpCooldown}s before requesting another OTP.`);
+      if (!upiOtpEmail) {
+        toast.info('UPI ID verify karne ke liye pehle field se bahar aayein.');
         return;
       }
-      setSaving(true);
-      await requestUpiOtp({
-        name: form.name,
-        address: form.address,
-        mobile: form.mobile,
-        gstNumber: form.gstNumber,
-        upiId: form.upiId,
-      });
-      setSaving(false);
+      if (!/^\d{6}$/.test(upiOtp)) {
+        toast.info('UPI save karne se pehle 6-digit OTP verify karein.');
+        return;
+      }
+      await verifyUpiOtp();
       return;
     }
 
@@ -243,23 +237,65 @@ export default function SettingsPage() {
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">UPI ID</label>
             <div className="flex gap-2">
-              <input className="input-field flex-1" value={form.upiId} onChange={e => setForm({ ...form, upiId: e.target.value })} placeholder="yourname@upi" inputMode="email" autoCapitalize="none" autoCorrect="off" />
-              <button
-                type="button"
-                className="btn-secondary shrink-0 px-4"
-                disabled={!form.upiId.trim() || upiOtpSending}
-                onClick={() => requestUpiOtp({
-                  name: form.name,
-                  address: form.address,
-                  mobile: form.mobile,
-                  gstNumber: form.gstNumber,
-                  upiId: form.upiId,
-                })}
-              >
-                {upiOtpSending ? 'Sending...' : 'Verify'}
-              </button>
+              <input
+                className="input-field flex-1"
+                value={form.upiId}
+                onChange={e => {
+                  setForm({ ...form, upiId: e.target.value });
+                  setUpiOtp('');
+                  setUpiOtpEmail('');
+                  setUpiOtpCooldown(0);
+                }}
+                onBlur={() => {
+                  const currentUpi = (data.business.upiId || '').trim().toLowerCase();
+                  const nextUpi = form.upiId.trim().toLowerCase();
+                  if (form.upiId.trim() && currentUpi !== nextUpi && !upiOtpEmail && !upiOtpSending) {
+                    requestUpiOtp({ name: form.name, address: form.address, mobile: form.mobile, gstNumber: form.gstNumber, upiId: form.upiId });
+                  }
+                }}
+                placeholder="yourname@upi"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">Adding or changing the UPI ID requires OTP verification on the business owner's email.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">UPI ID enter karke field se bahar aate hi OTP business owner ke email par bheja jayega.</p>
+
+            {upiOtpEmail && (
+              <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3">
+                <p className="text-xs text-muted-foreground mb-2">OTP sent to <span className="font-medium text-foreground">{upiOtpEmail}</span></p>
+                <div className="flex gap-2">
+                  <input
+                    value={upiOtp}
+                    onChange={e => setUpiOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    placeholder="123456"
+                    className="input-field flex-1 text-center text-lg font-mono tracking-[0.25em]"
+                  />
+                  <button
+                    type="button"
+                    onClick={verifyUpiOtp}
+                    disabled={upiOtpVerifying || upiOtp.length !== 6}
+                    className="btn-primary shrink-0 px-4"
+                  >
+                    {upiOtpVerifying ? 'Verifying...' : 'Verify'}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-[10px] text-muted-foreground">6-digit OTP enter karke Verify dabayein.</p>
+                  <button
+                    type="button"
+                    onClick={() => requestUpiOtp(pendingBusinessForm || form)}
+                    disabled={upiOtpSending || upiOtpCooldown > 0}
+                    className="text-[10px] text-primary font-medium disabled:opacity-50"
+                  >
+                    {upiOtpCooldown > 0 ? `Resend in ${upiOtpCooldown}s` : 'Resend OTP'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <button className="btn-primary flex items-center justify-center gap-2" onClick={save} disabled={saving}>
@@ -298,67 +334,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {upiOtpOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-card border border-border shadow-xl p-6">
-            <div className="flex items-start justify-between gap-4 mb-5">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">Confirm UPI ID</h2>
-                <p className="text-sm text-muted-foreground mt-1">For security, verify this UPI change with the business owner's email OTP.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setUpiOtpOpen(false); setPendingBusinessForm(null); setUpiOtp(''); }}
-                className="text-muted-foreground hover:text-foreground text-xl leading-none"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
 
-            <div className="rounded-xl bg-secondary/60 border border-border p-4 mb-4">
-              <p className="text-xs text-muted-foreground">OTP sent to</p>
-              <p className="text-sm font-semibold text-foreground break-all mt-0.5">{upiOtpEmail || 'business owner email'}</p>
-            </div>
-
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">6-digit OTP</label>
-            <input
-              value={upiOtp}
-              onChange={e => setUpiOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              placeholder="123456"
-              className="input-field text-center text-xl font-mono tracking-[0.35em]"
-              autoFocus
-            />
-
-            <div className="flex items-center justify-between gap-3 mt-4">
-              <button
-                type="button"
-                onClick={() => requestUpiOtp(pendingBusinessForm || form)}
-                disabled={upiOtpSending || upiOtpVerifying || upiOtpCooldown > 0}
-                className="text-sm text-primary font-medium disabled:opacity-50"
-              >
-                {upiOtpCooldown > 0 ? `Resend in ${upiOtpCooldown}s` : 'Resend OTP'}
-              </button>
-
-              <button
-                type="button"
-                onClick={verifyUpiOtp}
-                disabled={upiOtpVerifying || upiOtpSending || upiOtp.length !== 6}
-                className="btn-primary px-5"
-              >
-                {upiOtpVerifying ? 'Verifying...' : 'Verify & Save'}
-              </button>
-            </div>
-
-            <p className="text-[11px] text-muted-foreground mt-4">
-              The UPI ID is saved only after the OTP is verified.
-            </p>
-          </div>
-        </div>
-      )}
 
     </AppLayout>
   );

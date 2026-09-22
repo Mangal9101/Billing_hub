@@ -36,9 +36,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Razorpay plan ID for ${plan} is not configured.` }, { status: 503 });
     }
 
-    // Monthly is ₹2 trial only for eligible new accounts; existing accounts use the normal ₹99/month subscription.
-    const trial = plan === 'monthly' && body?.trial === true;
-
     const payload: Record<string, unknown> = {
       plan_id: planId,
       total_count: plan === 'monthly' ? 120 : plan === 'quarterly' ? 40 : 10,
@@ -52,19 +49,6 @@ export async function POST(req: NextRequest) {
         user_email: ctx.user.email || '',
       },
     };
-
-    // Monthly: collect ₹2 upfront and start the ₹99 recurring plan after 7 days.
-    // Razorpay Subscriptions supports trial periods and upfront charges.
-    if (trial) {
-      payload.start_at = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
-      payload.addons = [{
-        item: {
-          name: 'Billing Hub 7-Day Trial',
-          amount: 200,
-          currency: 'INR',
-        },
-      }];
-    }
 
     const r = await razorpayRequest('subscriptions', {
       method: 'POST',

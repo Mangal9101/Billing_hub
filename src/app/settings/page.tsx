@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useAppStore } from '@/lib/store';
-import { getSession, getValidAccessToken } from '@/lib/auth';
+import { getSession, getValidAccessToken, refreshAccessToken } from '@/lib/auth';
 import { toast } from 'sonner';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
@@ -64,11 +64,24 @@ export default function SettingsPage() {
 
     setUpiOtpSending(true);
     try {
-      const response = await fetch('/api/business/upi/request-otp', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      });
-      const json = await response.json().catch(() => ({}));
+      const requestOtp = (accessToken: string) =>
+        fetch('/api/business/upi/request-otp', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        });
+
+      let response = await requestOtp(token);
+      let json = await response.json().catch(() => ({}));
+
+      // The app can keep a locally cached access token while Supabase has
+      // already rotated it. If the server rejects it, refresh once and retry.
+      if (response.status === 401) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          response = await requestOtp(refreshed);
+          json = await response.json().catch(() => ({}));
+        }
+      }
       if (!response.ok) {
         const message = String(json?.error || '').toLowerCase();
         if (response.status === 429 || message.includes('rate limit') || message.includes('too many')) {
@@ -225,8 +238,24 @@ export default function SettingsPage() {
 
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">UPI ID</label>
-            <input className="input-field" value={form.upiId} onChange={e => setForm({ ...form, upiId: e.target.value })} placeholder="yourname@upi" inputMode="email" autoCapitalize="none" autoCorrect="off" />
-            <p className="text-[10px] text-muted-foreground mt-1">This UPI ID is used for customer payment QR codes on invoices.</p>
+            <div className="flex gap-2">
+              <input className="input-field flex-1" value={form.upiId} onChange={e => setForm({ ...form, upiId: e.target.value })} placeholder="yourname@upi" inputMode="email" autoCapitalize="none" autoCorrect="off" />
+              <button
+                type="button"
+                className="btn-secondary shrink-0 px-4"
+                disabled={!form.upiId.trim() || upiOtpSending}
+                onClick={() => requestUpiOtp({
+                  name: form.name,
+                  address: form.address,
+                  mobile: form.mobile,
+                  gstNumber: form.gstNumber,
+                  upiId: form.upiId,
+                })}
+              >
+                {upiOtpSending ? 'Sending...' : 'Verify'}
+              </button>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">Adding or changing the UPI ID requires OTP verification on the business owner's email.</p>
           </div>
 
           <button className="btn-primary flex items-center justify-center gap-2" onClick={save} disabled={saving}>

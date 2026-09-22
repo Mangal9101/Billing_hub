@@ -60,7 +60,8 @@
     "react-dom": "19.0.3",
     "react-hook-form": "^7.87.0",
     "recharts": "^2.15.2",
-    "sonner": "^1.7.4"
+    "sonner": "^1.7.4",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -79,6 +80,7 @@
     "prettier": "^3.5.3",
     "tailwindcss": "3.4.6",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/qrcode": "^1.5.5"
   }
 }

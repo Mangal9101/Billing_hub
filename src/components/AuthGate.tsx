@@ -119,6 +119,14 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       const cachedSubscription = readSubscriptionCache(s.companyId);
       if (isSubscriptionActive(cachedSubscription)) {
         if (!cancelled) setAllowed(true);
+        if (cachedSubscription?.freeTrial && cachedSubscription?.trialEndsAt) {
+          const remaining = new Date(String(cachedSubscription.trialEndsAt)).getTime() - Date.now();
+          if (remaining > 0) {
+            window.setTimeout(() => {
+              if (!cancelled) router.replace('/pricing?from=login');
+            }, remaining);
+          }
+        }
         return;
       }
 
@@ -134,6 +142,14 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
           if (response.ok && isSubscriptionActive(json?.subscription)) {
             writeSubscriptionCache(s.companyId, json.subscription);
             if (!cancelled) setAllowed(true);
+            if (json.subscription?.freeTrial && json.subscription?.trialEndsAt) {
+              const remaining = new Date(String(json.subscription.trialEndsAt)).getTime() - Date.now();
+              if (remaining > 0) {
+                window.setTimeout(() => {
+                  if (!cancelled) router.replace('/pricing?from=login');
+                }, remaining);
+              }
+            }
             return;
           }
 

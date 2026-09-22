@@ -333,13 +333,13 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
    * Invoice payments go directly to the business UPI ID.
    * Razorpay is not involved in customer invoice payments.
    */
-  const BUSINESS_UPI_ID = '9406519101-1@okbizaxis';
-  const BUSINESS_UPI_NAME = 'Maa Durga Kirana Store';
+  const BUSINESS_UPI_ID = (data.business.upiId || '').trim();
+  const BUSINESS_UPI_NAME = (data.business.name || 'Business').trim();
 
   useEffect(() => {
     let cancelled = false;
 
-    if (watchMode !== 'UPI' || paidAmt <= 0) {
+    if (watchMode !== 'UPI' || paidAmt <= 0 || !BUSINESS_UPI_ID) {
       setUpiQrDataUrl('');
       return;
     }
@@ -365,7 +365,7 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [watchMode, paidAmt, watchCustomerName]);
+  }, [watchMode, paidAmt, watchCustomerName, BUSINESS_UPI_ID, BUSINESS_UPI_NAME]);
 
   const filteredProducts = productCatalog.filter(
     (p) =>
@@ -1489,11 +1489,17 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
               <div className="rounded-xl border border-border bg-card p-4 flex flex-col items-center gap-3">
                 <div className="text-center">
                   <p className="text-sm font-semibold text-foreground">
-                    Scan to Pay
+                    {BUSINESS_UPI_ID ? 'Scan to Pay' : 'UPI ID Required'}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    ₹{paidAmt.toLocaleString('en-IN')} to {BUSINESS_UPI_ID}
-                  </p>
+                  {BUSINESS_UPI_ID ? (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      ₹{paidAmt.toLocaleString('en-IN')} to {BUSINESS_UPI_ID}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Add your UPI ID in Settings → Business Profile to generate the payment QR.
+                    </p>
+                  )}
                 </div>
 
                 {upiQrDataUrl ? (
@@ -1506,12 +1512,14 @@ export default function CreateInvoicePanel({ onSave, onCancel }: Props) {
                       className="block w-[220px] h-[220px]"
                     />
                   </div>
-                ) : (
+                ) : BUSINESS_UPI_ID ? (
                   <div className="w-[220px] h-[220px] rounded-xl bg-secondary animate-pulse" />
-                )}
+                ) : null}
 
                 <p className="text-[11px] text-center text-muted-foreground">
-                  Scan with any UPI app to pay directly to the business account.
+                  {BUSINESS_UPI_ID
+                    ? 'Scan with any UPI app to pay directly to the business account.'
+                    : 'Save a valid UPI ID in Settings → Business Profile first.'}
                 </p>
               </div>
             )}

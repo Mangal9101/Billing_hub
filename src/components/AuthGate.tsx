@@ -111,17 +111,19 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // IMPORTANT: do not block the app on the subscription API.
-      // AppStoreProvider can render the local cached business data immediately.
-      // Subscription validation continues in the background and only redirects
-      // if the server confirms that access is not active.
-      if (!cancelled) setAllowed(true);
-
-      if (isAdminAccount(s)) return;
+      if (isAdminAccount(s)) {
+        if (!cancelled) setAllowed(true);
+        return;
+      }
 
       const cachedSubscription = readSubscriptionCache(s.companyId);
-      if (isSubscriptionActive(cachedSubscription)) return;
+      if (isSubscriptionActive(cachedSubscription)) {
+        if (!cancelled) setAllowed(true);
+        return;
+      }
 
+      // Subscription status is the access gate. The server creates the free
+      // 7-day access window on the first authenticated check.
       void fetch('/api/razorpay/status', {
         headers: { Authorization: `Bearer ${s.accessToken}` },
         cache: 'no-store',
@@ -131,6 +133,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
           if (response.ok && isSubscriptionActive(json?.subscription)) {
             writeSubscriptionCache(s.companyId, json.subscription);
+            if (!cancelled) setAllowed(true);
             return;
           }
 

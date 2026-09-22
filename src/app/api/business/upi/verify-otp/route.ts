@@ -76,7 +76,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'The OTP does not match the business owner email.' }, { status: 403 });
     }
 
-    return NextResponse.json({ ok: true, verified: true, accessToken: auth.accessToken });
+    return NextResponse.json({
+      ok: true,
+      verified: true,
+      accessToken: auth.accessToken,
+      refreshToken: auth.refreshToken || refreshToken,
+    });
   } catch (e: any) {
     console.error('UPI OTP VERIFY ERROR:', e);
     return NextResponse.json({ error: e?.message || 'Unable to verify UPI confirmation OTP.' }, { status: 500 });

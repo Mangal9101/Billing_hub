@@ -32,7 +32,7 @@ export async function supabaseAuthUser(accessToken: string) {
 
 export async function supabaseAuthUserWithRefresh(accessToken: string, refreshToken?: string) {
   const direct = await supabaseAuthUser(accessToken);
-  if (direct) return { user: direct, accessToken };
+  if (direct) return { user: direct, accessToken, refreshToken: refreshToken || null };
   if (!refreshToken || !SUPABASE_URL || !SUPABASE_ANON_KEY) return { user: null, accessToken: null };
 
   try {
@@ -45,7 +45,11 @@ export async function supabaseAuthUserWithRefresh(accessToken: string, refreshTo
     const json = await response.json().catch(() => ({}));
     if (!response.ok || !json?.access_token) return { user: null, accessToken: null };
     const user = await supabaseAuthUser(String(json.access_token));
-    return { user, accessToken: user ? String(json.access_token) : null };
+    return {
+      user,
+      accessToken: user ? String(json.access_token) : null,
+      refreshToken: user ? String(json.refresh_token || refreshToken) : null,
+    };
   } catch {
     return { user: null, accessToken: null };
   }

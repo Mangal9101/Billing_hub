@@ -149,6 +149,7 @@ export default function Sidebar({
   const [businesses, setBusinesses] = useState<BusinessOption[]>([]);
   const [switchOpen, setSwitchOpen] = useState(false);
   const [switchLoading, setSwitchLoading] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -203,7 +204,34 @@ export default function Sidebar({
     !!session?.permissions?.includes(permission);
 
   const canSettings = !!session?.isOwner;
-  const canPlans = !!session?.isOwner;
+  const canPlans = !!session?.isOwner && showPlans;
+
+  useEffect(() => {
+    if (!session?.isOwner || !session?.accessToken) {
+      setShowPlans(false);
+      return;
+    }
+    let active = true;
+    fetch('/api/razorpay/status', {
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+      cache: 'no-store',
+    })
+      .then((r) => r.json().catch(() => ({})))
+      .then((j) => {
+        if (!active) return;
+        const subscription = j?.subscription;
+        const status = String(subscription?.status || '').toLowerCase();
+        const end = subscription?.trialEndsAt ? new Date(String(subscription.trialEndsAt)).getTime() : NaN;
+        const expired = Number.isFinite(end) && Date.now() >= end;
+        setShowPlans(
+          subscription?.lifetime === true ||
+          (status === 'active' && !subscription?.freeTrial) ||
+          expired
+        );
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [session?.isOwner, session?.accessToken, session?.companyId]);
 
   // Prefetch both the Staff page bundle and its data while the sidebar is visible.
   // This makes Staff open with the latest cached list instead of waiting on the API.

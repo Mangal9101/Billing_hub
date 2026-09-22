@@ -30,6 +30,27 @@ export async function supabaseAuthUser(accessToken: string) {
   return r.json();
 }
 
+export async function supabaseAuthUserWithRefresh(accessToken: string, refreshToken?: string) {
+  const direct = await supabaseAuthUser(accessToken);
+  if (direct) return { user: direct, accessToken };
+  if (!refreshToken || !SUPABASE_URL || !SUPABASE_ANON_KEY) return { user: null, accessToken: null };
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+      cache: 'no-store',
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || !json?.access_token) return { user: null, accessToken: null };
+    const user = await supabaseAuthUser(String(json.access_token));
+    return { user, accessToken: user ? String(json.access_token) : null };
+  } catch {
+    return { user: null, accessToken: null };
+  }
+}
+
 export async function verifyCompanyMembership(userId: string) {
   if (!userId) return null;
 

@@ -103,15 +103,34 @@ export async function GET(req: NextRequest) {
     if (!dataResponse.ok) return NextResponse.json({ error: await dataResponse.text() }, { status: 500 });
 
     const rows = await dataResponse.json().catch(() => []);
-    const subscription = rows?.[0]?.payload?.subscription || null;
+    const payload = rows?.[0]?.payload || {};
+    let subscription = payload?.subscription || null;
+
+    // Free access is handled by Billing Hub itself. It is NOT a Razorpay
+    // subscription and never collects ₹2 or creates an AutoPay mandate.
+    if (!subscription && role === 'owner') {
+      const now = new Date();
+      const trialEndsAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      subscription = {
+        plan: 'free_trial',
+        status: 'active',
+        isTrial: true,
+        freeTrial: true,
+        trialEndsAt,
+        activatedAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      };
+      await supabaseAdmin(
+        `business_data?business_id=eq.${encodeURIComponent(businessId)}`,
+        { method: 'PATCH', body: JSON.stringify({ payload: { ...payload, subscription }, updated_at: now.toISOString() }) }
+      );
+    }
 
     return NextResponse.json({
       subscription,
       businessId,
       active: isSubscriptionActive(subscription),
-      // The ₹2 trial is a new-account offer only. Once an account has any
-      // subscription record, do not show the trial offer again.
-      trialEligible: !subscription,
+      trialEligible: false,
     });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Unable to load subscription status.' }, { status: 500 });

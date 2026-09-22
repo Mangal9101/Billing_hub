@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       accessToken: auth.accessToken,
+      refreshToken: auth.refreshToken || refreshToken,
       email,
       message: 'UPI confirmation OTP sent to the business owner email.',
     });

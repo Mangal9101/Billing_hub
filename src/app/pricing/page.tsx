@@ -30,6 +30,7 @@ export default function PricingPage() {
   const fromSidebar = searchParams.get('from') === 'sidebar';
   const showSignOut = searchParams.get('from') === 'login';
   const session = getSession();
+  const isAdminLifetime = String(session?.email || '').trim().toLowerCase() === 'mkp94065@gmail.com';
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -68,7 +69,9 @@ export default function PricingPage() {
       .then((r) => r.json())
       .then((j) => {
         if (cancelled) return;
-        const nextSubscription = j.subscription || null;
+        const nextSubscription = j.subscription || (isAdminLifetime
+          ? { plan: 'lifetime', status: 'active', lifetime: true, updatedAt: new Date().toISOString() }
+          : null);
         setStatus(nextSubscription);
         try {
           if (session.companyId) {

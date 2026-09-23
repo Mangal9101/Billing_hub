@@ -25,7 +25,7 @@ function isSubscriptionActive(subscription: any) {
     }
   }
 
-  if (subscription.isTrial && subscription.trialEndsAt) {
+  if (subscription.freeTrial && subscription.trialEndsAt) {
     const end = new Date(String(subscription.trialEndsAt)).getTime();
     if (Number.isFinite(end) && Date.now() >= end) return false;
   }

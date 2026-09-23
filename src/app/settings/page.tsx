@@ -60,33 +60,39 @@ export default function SettingsPage() {
     if (upiOtpRequestingRef.current) return;
     upiOtpRequestingRef.current = true;
 
-    let token = await getValidAccessToken();
-    let refreshToken = getSession()?.refreshToken || localStorage.getItem('billing_hub_refresh_token_v4') || '';
+    let token = '';
+    let refreshToken = '';
 
-    // Recover the real Supabase browser session when the app's legacy
-    // localStorage session has an expired/missing token. This prevents the
-    // UPI OTP flow from failing with "Invalid authentication session".
-    if (!token || !refreshToken) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-      if (supabaseUrl && supabaseKey) {
-        const supabase = createClient(supabaseUrl, supabaseKey, {
-          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
-        });
-        const current = await supabase.auth.getSession();
-        if (current.data.session?.access_token) {
-          token = current.data.session.access_token;
-          refreshToken = current.data.session.refresh_token || refreshToken;
+    // Always prefer the real Supabase browser session. The Billing Hub
+    // localStorage token can still look valid as a JWT while Supabase has
+    // rotated/revoked it, which causes the API to return "Invalid
+    // authentication session".
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    if (supabaseUrl && supabaseKey) {
+      const supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+      });
+      const current = await supabase.auth.getSession();
+      if (current.data.session?.access_token) {
+        token = current.data.session.access_token;
+        refreshToken = current.data.session.refresh_token || '';
+        updateAccessToken(token, refreshToken || undefined);
+      } else {
+        const refreshed = await supabase.auth.refreshSession();
+        if (refreshed.data.session?.access_token) {
+          token = refreshed.data.session.access_token;
+          refreshToken = refreshed.data.session.refresh_token || '';
           updateAccessToken(token, refreshToken || undefined);
-        } else {
-          const refreshed = await supabase.auth.refreshSession();
-          if (refreshed.data.session?.access_token) {
-            token = refreshed.data.session.access_token;
-            refreshToken = refreshed.data.session.refresh_token || refreshToken;
-            updateAccessToken(token, refreshToken || undefined);
-          }
         }
       }
+    }
+
+    // Fallback to the Billing Hub session only if the browser Supabase
+    // session is unavailable.
+    if (!token) {
+      token = await getValidAccessToken();
+      refreshToken = getSession()?.refreshToken || localStorage.getItem('billing_hub_refresh_token_v4') || '';
     }
 
     if (!token) {
@@ -152,7 +158,7 @@ export default function SettingsPage() {
 
     setUpiOtpVerifying(true);
     try {
-      const refreshToken = getSession()?.refreshToken || localStorage.getItem('billing_hub_refresh_token_v4') || '';
+      let refreshToken = getSession()?.refreshToken || localStorage.getItem('billing_hub_refresh_token_v4') || '';
       const response = await fetch('/api/business/upi/verify-otp', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'X-Refresh-Token': refreshToken, 'Content-Type': 'application/json' },

@@ -6,6 +6,7 @@ import { useAppStore } from '@/lib/store';
 import { getSession, getValidAccessToken, refreshAccessToken, updateAccessToken } from '@/lib/auth';
 import { toast } from 'sonner';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { createClient } from '@supabase/supabase-js';
 
 export default function SettingsPage() {
   const { data, ready, setBusiness } = useAppStore();
@@ -59,7 +60,35 @@ export default function SettingsPage() {
     if (upiOtpRequestingRef.current) return;
     upiOtpRequestingRef.current = true;
 
-    const token = await getValidAccessToken();
+    let token = await getValidAccessToken();
+    let refreshToken = getSession()?.refreshToken || localStorage.getItem('billing_hub_refresh_token_v4') || '';
+
+    // Recover the real Supabase browser session when the app's legacy
+    // localStorage session has an expired/missing token. This prevents the
+    // UPI OTP flow from failing with "Invalid authentication session".
+    if (!token || !refreshToken) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey, {
+          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+        });
+        const current = await supabase.auth.getSession();
+        if (current.data.session?.access_token) {
+          token = current.data.session.access_token;
+          refreshToken = current.data.session.refresh_token || refreshToken;
+          updateAccessToken(token, refreshToken || undefined);
+        } else {
+          const refreshed = await supabase.auth.refreshSession();
+          if (refreshed.data.session?.access_token) {
+            token = refreshed.data.session.access_token;
+            refreshToken = refreshed.data.session.refresh_token || refreshToken;
+            updateAccessToken(token, refreshToken || undefined);
+          }
+        }
+      }
+    }
+
     if (!token) {
       upiOtpRequestingRef.current = false;
       toast.error('Your session has expired. Please sign in again.');
@@ -68,7 +97,6 @@ export default function SettingsPage() {
 
     setUpiOtpSending(true);
     try {
-      const refreshToken = getSession()?.refreshToken || localStorage.getItem('billing_hub_refresh_token_v4') || '';
       const requestOtp = (accessToken: string) =>
         fetch('/api/business/upi/request-otp', {
           method: 'POST',

@@ -32,6 +32,12 @@ export default function PricingPage() {
   const session = getSession();
   const isAdminLifetime = String(session?.email || '').trim().toLowerCase() === 'mkp94065@gmail.com';
 
+  const handleSignOut = async () => {
+    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
+    clearSession();
+    router.replace('/sign-up-login');
+  };
+
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -294,6 +300,23 @@ export default function PricingPage() {
   const content = (
     <div className="min-h-full bg-background p-5 md:p-8">
       <div className="max-w-6xl mx-auto">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Plans & Billing</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage your Billing Hub subscription.</p>
+          </div>
+          {showSignOut && (
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut size={19} />
+            </button>
+          )}
+        </div>
         {status?.status === 'active' && (
           <div className="mb-7 rounded-2xl border border-border bg-card p-5 md:p-6 shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

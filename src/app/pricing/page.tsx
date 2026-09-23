@@ -133,9 +133,7 @@ export default function PricingPage() {
   const cancelAutoPay = async () => {
     if (!session?.accessToken || !status?.razorpaySubscriptionId) return;
     const confirmed = window.confirm(
-      status?.isTrial
-        ? 'Cancel the 7-day trial now? Access will stop immediately and the ₹2 trial cannot be used again.'
-        : 'Cancel AutoPay? Your current paid access will remain active until the current billing period ends.'
+      'Cancel AutoPay? Your current paid access will remain active until the current billing period ends.'
     );
     if (!confirmed) return;
 
@@ -152,8 +150,7 @@ export default function PricingPage() {
       if (!response.ok) throw new Error(result?.error || 'Unable to cancel AutoPay.');
 
       setStatus(result?.subscription || null);
-      if (result?.subscription?.isTrial) setTrialEligible(false);
-      try {
+            try {
         if (session.companyId) {
           sessionStorage.setItem(
             'billing_hub_subscription_cache_v1',
@@ -166,15 +163,11 @@ export default function PricingPage() {
         }
       } catch {}
 
-      if (result?.subscription?.isTrial) {
-        toast.success('Trial cancelled. Access is now stopped.');
-      } else {
-        toast.success(
-          result?.accessUntil
-            ? `AutoPay cancelled. Access remains active until ${formatDate(result.accessUntil)}.`
-            : 'AutoPay cancelled. Current paid access remains active until expiry.'
-        );
-      }
+      toast.success(
+        result?.accessUntil
+          ? `AutoPay cancelled. Access remains active until ${formatDate(result.accessUntil)}.`
+          : 'AutoPay cancelled. Current paid access remains active until expiry.'
+      );
     } catch (e: any) {
       toast.error(e?.message || 'Unable to cancel AutoPay.');
     } finally {
@@ -188,13 +181,8 @@ export default function PricingPage() {
       return;
     }
 
-    if (planId === 'trial') {
-      toast.error('The ₹2 trial has been removed. Please choose a paid plan.');
-      return;
-    }
-    const razorpayPlan = planId;
-    const isTrialCheckout = false;
-
+        const razorpayPlan = planId;
+    
     setLoading(planId);
     try {
       const endpoint = razorpayPlan === 'lifetime' ? '/api/razorpay/create-order' : '/api/razorpay/create-subscription';

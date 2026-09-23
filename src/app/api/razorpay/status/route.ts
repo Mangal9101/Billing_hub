@@ -21,14 +21,14 @@ function isSubscriptionActive(subscription: any) {
   if (subscription.autoPayCancelled) {
     // A cancelled trial is immediately inactive. A paid subscription remains
     // active only until the already-paid billing period ends.
-    if (subscription.isTrial) return false;
+    if (subscription.freeTrial) return false;
     if (subscription.currentPeriodEndsAt) {
       const end = new Date(String(subscription.currentPeriodEndsAt)).getTime();
       if (Number.isFinite(end) && Date.now() >= end) return false;
     }
   }
 
-  if (subscription.isTrial && subscription.trialEndsAt) {
+  if (subscription.freeTrial && subscription.trialEndsAt) {
     const end = new Date(String(subscription.trialEndsAt)).getTime();
     if (Number.isFinite(end) && Date.now() >= end) return false;
   }
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
       subscription = {
         plan: 'free_trial',
         status: 'active',
-        isTrial: true,
+        isTrial: false,
         freeTrial: true,
         trialEndsAt,
         activatedAt: now.toISOString(),

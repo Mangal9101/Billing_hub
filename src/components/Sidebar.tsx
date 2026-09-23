@@ -142,7 +142,8 @@ export default function Sidebar({
 
   // Clear the local auth state first, then hard-navigate. This avoids waiting
   // for owner-only store/subscription listeners during the sign-out transition.
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
     clearSession();
   };
 

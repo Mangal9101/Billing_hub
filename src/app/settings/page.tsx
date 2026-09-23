@@ -106,7 +106,7 @@ export default function SettingsPage() {
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">UPI ID</label>
             <input className="input-field" value={form.upiId} onChange={e => setForm({ ...form, upiId: e.target.value })} placeholder="yourname@upi" inputMode="email" autoCapitalize="none" autoCorrect="off" />
-            <p className="text-[10px] text-muted-foreground mt-1">This UPI ID is used for customer payment QR codes on invoices.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">This UPI ID is used directly for customer payment QR codes on invoices. No OTP or bank-name verification is required.</p>
           </div>
 
           <button className="btn-primary flex items-center justify-center gap-2" onClick={save} disabled={saving}>

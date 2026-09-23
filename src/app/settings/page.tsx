@@ -107,6 +107,7 @@ export default function SettingsPage() {
         fetch('/api/business/upi/request-otp', {
           method: 'POST',
           headers: { Authorization: `Bearer ${accessToken}`, 'X-Refresh-Token': refreshToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ upiId: businessForm.upiId.trim().toLowerCase() }),
         });
 
       let response = await requestOtp(token);
@@ -162,7 +163,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/business/upi/verify-otp', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'X-Refresh-Token': refreshToken, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ otp: upiOtp }),
+        body: JSON.stringify({ otp: upiOtp, upiId: (pendingBusinessForm?.upiId || form.upiId).trim().toLowerCase() }),
       });
       const json = await response.json().catch(() => ({}));
       if (json?.accessToken) updateAccessToken(String(json.accessToken));

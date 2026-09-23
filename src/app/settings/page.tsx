@@ -3,31 +3,25 @@
 import React, { useEffect, useRef, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useAppStore } from '@/lib/store';
-import { getSession, getValidAccessToken, refreshAccessToken, updateAccessToken } from '@/lib/auth';
+import { getSession, getValidAccessToken } from '@/lib/auth';
 import { toast } from 'sonner';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { createClient } from '@supabase/supabase-js';
 
 export default function SettingsPage() {
   const { data, ready, setBusiness } = useAppStore();
   const [form, setForm] = useState({ name: '', address: '', mobile: '', gstNumber: '', upiId: '' });
   const [saving, setSaving] = useState(false);
-  const [upiOtp, setUpiOtp] = useState('');
-  const [upiOtpEmail, setUpiOtpEmail] = useState('');
-  const [upiOtpCooldown, setUpiOtpCooldown] = useState(0);
-  const [upiOtpSending, setUpiOtpSending] = useState(false);
-  const [upiOtpVerifying, setUpiOtpVerifying] = useState(false);
-  const [upiVerificationStarted, setUpiVerificationStarted] = useState(false);
-  const [pendingBusinessForm, setPendingBusinessForm] = useState<typeof form | null>(null);
-  const upiOtpRequestingRef = useRef(false);
+  const [upiVerifying, setUpiVerifying] = useState(false);
+  const [upiRegisteredName, setUpiRegisteredName] = useState('');
+  const [upiVerifiedId, setUpiVerifiedId] = useState('');
   const ref = useRef<HTMLInputElement>(null);
   const session = getSession();
 
   useEffect(() => {
-    if (!upiOtpCooldown) return;
-    const timer = window.setInterval(() => setUpiOtpCooldown(v => Math.max(0, v - 1)), 1000);
-    return () => window.clearInterval(timer);
-  }, [upiOtpCooldown]);
+    if (data.business.upiId) {
+      setUpiVerifiedId(data.business.upiId.trim().toLowerCase());
+    }
+  }, [data.business.upiId]);
 
   useEffect(() => {
     setForm({
@@ -56,98 +50,10 @@ export default function SettingsPage() {
     }, 250);
   };
 
-  const requestUpiOtp = async (businessForm: typeof form) => {
-    if (upiOtpRequestingRef.current) return;
-    upiOtpRequestingRef.current = true;
-
-    let token = '';
-    let refreshToken = '';
-
-    // Always prefer the real Supabase browser session. The Billing Hub
-    // localStorage token can still look valid as a JWT while Supabase has
-    // rotated/revoked it, which causes the API to return "Invalid
-    // authentication session".
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-    if (supabaseUrl && supabaseKey) {
-      const supabase = createClient(supabaseUrl, supabaseKey, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
-      });
-      const current = await supabase.auth.getSession();
-      if (current.data.session?.access_token) {
-        token = current.data.session.access_token;
-        refreshToken = current.data.session.refresh_token || '';
-        updateAccessToken(token, refreshToken || undefined);
-      } else {
-        const refreshed = await supabase.auth.refreshSession();
-        if (refreshed.data.session?.access_token) {
-          token = refreshed.data.session.access_token;
-          refreshToken = refreshed.data.session.refresh_token || '';
-          updateAccessToken(token, refreshToken || undefined);
-        }
-      }
-    }
-
-    // Fallback to the Billing Hub session only if the browser Supabase
-    // session is unavailable.
-    if (!token) {
-      token = await getValidAccessToken();
-      refreshToken = getSession()?.refreshToken || localStorage.getItem('billing_hub_refresh_token_v4') || '';
-    }
-
-    if (!token) {
-      upiOtpRequestingRef.current = false;
-      toast.error('Your session has expired. Please sign in again.');
-      return;
-    }
-
-    setUpiOtpSending(true);
-    try {
-      const requestOtp = (accessToken: string) =>
-        fetch('/api/business/upi/request-otp', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${accessToken}`, 'X-Refresh-Token': refreshToken, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ upiId: businessForm.upiId.trim().toLowerCase() }),
-        });
-
-      let response = await requestOtp(token);
-      let json = await response.json().catch(() => ({}));
-
-      // The app can keep a locally cached access token while Supabase has
-      // already rotated it. If the server rejects it, refresh once and retry.
-      if (response.status === 401) {
-        const refreshed = await refreshAccessToken();
-        if (refreshed) {
-          response = await requestOtp(refreshed);
-          json = await response.json().catch(() => ({}));
-        }
-      }
-      if (json?.accessToken) updateAccessToken(String(json.accessToken), json?.refreshToken || undefined);
-      if (!response.ok) {
-        const message = String(json?.error || '').toLowerCase();
-        if (response.status === 429 || message.includes('rate limit') || message.includes('too many')) {
-          throw new Error('Too many OTP requests. Please wait a minute and try again.');
-        }
-        throw new Error(json?.error || 'Unable to send UPI confirmation OTP.');
-      }
-
-      setPendingBusinessForm(businessForm);
-      setUpiOtpEmail(String(json.email || ''));
-      setUpiVerificationStarted(true);
-      setUpiOtp('');
-      setUpiOtpCooldown(60);
-      toast.success('OTP sent to the business owner email.');
-    } catch (e: any) {
-      toast.error(e?.message || 'Unable to send UPI confirmation OTP.');
-    } finally {
-      setUpiOtpSending(false);
-      upiOtpRequestingRef.current = false;
-    }
-  };
-
-  const verifyUpiOtp = async () => {
-    if (!/^\d{6}$/.test(upiOtp)) {
-      toast.error('Enter a valid 6-digit OTP.');
+  const verifyUpiId = async () => {
+    const upiId = form.upiId.trim().toLowerCase();
+    if (!upiId || !upiId.includes('@')) {
+      toast.error('Enter a valid UPI ID.');
       return;
     }
 
@@ -157,38 +63,27 @@ export default function SettingsPage() {
       return;
     }
 
-    setUpiOtpVerifying(true);
+    setUpiVerifying(true);
     try {
-      let refreshToken = getSession()?.refreshToken || localStorage.getItem('billing_hub_refresh_token_v4') || '';
-      const response = await fetch('/api/business/upi/verify-otp', {
+      const response = await fetch('/api/business/upi/verify', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'X-Refresh-Token': refreshToken, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ otp: upiOtp, upiId: (pendingBusinessForm?.upiId || form.upiId).trim().toLowerCase() }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ upiId }),
       });
       const json = await response.json().catch(() => ({}));
-      if (json?.accessToken) updateAccessToken(String(json.accessToken));
-      if (!response.ok) {
-        const message = String(json?.error || '').toLowerCase();
-        if (message.includes('expired') || message.includes('otp_expired')) {
-          throw new Error('OTP expired. Please request a new OTP.');
-        }
-        throw new Error(json?.error || 'Invalid OTP. Please check the code and try again.');
-      }
+      if (!response.ok) throw new Error(json?.error || 'Unable to verify UPI ID.');
 
-      setUpiOtp('');
-      setUpiOtpEmail('');
-      setUpiOtpCooldown(0);
-      setUpiVerificationStarted(false);
-      const next = pendingBusinessForm;
-      setPendingBusinessForm(null);
-      if (next) {
-        saveBusinessDetails(next);
-        toast.success('UPI ID saved successfully.');
-      }
+      setUpiRegisteredName(String(json.registeredName || ''));
+      setUpiVerifiedId(upiId);
+      setForm(current => ({ ...current, upiId }));
+      toast.success('UPI ID verified successfully.');
     } catch (e: any) {
-      toast.error(e?.message || 'Unable to verify OTP.');
+      toast.error(e?.message || 'Unable to verify UPI ID.');
     } finally {
-      setUpiOtpVerifying(false);
+      setUpiVerifying(false);
     }
   };
 
@@ -201,20 +96,11 @@ export default function SettingsPage() {
     const currentUpi = (data.business.upiId || '').trim().toLowerCase();
     const nextUpi = form.upiId.trim().toLowerCase();
 
-    // UPI is treated as a protected business setting. The first UPI ID and
-    // every later change/removal require an OTP sent to the business owner's
-    // authenticated email. Other business fields are saved after verification.
     if (currentUpi !== nextUpi) {
-      if (!upiOtpEmail) {
+      if (!upiRegisteredName || upiVerifiedId !== nextUpi) {
         toast.info('UPI ID verify karne ke liye pehle Verify button dabayein.');
         return;
       }
-      if (!/^\d{6}$/.test(upiOtp)) {
-        toast.info('UPI save karne se pehle 6-digit OTP verify karein.');
-        return;
-      }
-      await verifyUpiOtp();
-      return;
     }
 
     saveBusinessDetails(form);
@@ -286,81 +172,32 @@ export default function SettingsPage() {
                 value={form.upiId}
                 onChange={e => {
                   setForm({ ...form, upiId: e.target.value });
-                  setUpiOtp('');
-                  setUpiOtpEmail('');
-                  setUpiOtpCooldown(0);
-                  setUpiVerificationStarted(false);
+                  setUpiRegisteredName('');
+                  setUpiVerifiedId('');
                 }}
                 placeholder="yourname@upi"
                 inputMode="email"
                 autoCapitalize="none"
                 autoCorrect="off"
               />
-              {!upiVerificationStarted && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const currentUpi = (data.business.upiId || '').trim().toLowerCase();
-                    const nextUpi = form.upiId.trim().toLowerCase();
-                    if (!form.upiId.trim()) {
-                      toast.info('Pehle UPI ID enter karein.');
-                      return;
-                    }
-                    if (currentUpi === nextUpi) {
-                      toast.info('UPI ID mein koi change nahi hai.');
-                      return;
-                    }
-                    requestUpiOtp({
-                      name: form.name,
-                      address: form.address,
-                      mobile: form.mobile,
-                      gstNumber: form.gstNumber,
-                      upiId: form.upiId
-                    });
-                  }}
-                  disabled={upiOtpSending}
-                  className="btn-primary shrink-0 px-4"
-                >
-                  {upiOtpSending ? 'Sending...' : 'Verify'}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={verifyUpiId}
+                disabled={upiVerifying || !form.upiId.trim()}
+                className="btn-primary shrink-0 px-4"
+              >
+                {upiVerifying ? 'Verifying...' : 'Verify'}
+              </button>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">UPI ID enter karke <span className="font-medium text-foreground">Verify</span> dabayein. OTP business owner ke email par bheja jayega.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              UPI ID enter karke Verify dabayein. Koi OTP required nahi hai.
+            </p>
 
-            {upiVerificationStarted && (
+            {upiRegisteredName && upiVerifiedId === form.upiId.trim().toLowerCase() && (
               <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3">
-                <p className="text-xs font-medium text-foreground mb-1">Verify UPI ID</p>
-                <p className="text-xs text-muted-foreground mb-2">OTP sent to <span className="font-medium text-foreground">{upiOtpEmail || "business owner email"}</span></p>
-                <div className="flex gap-2">
-                  <input
-                    value={upiOtp}
-                    onChange={e => setUpiOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                    placeholder="123456"
-                    className="input-field flex-1 text-center text-lg font-mono tracking-[0.25em]"
-                  />
-                  <button
-                    type="button"
-                    onClick={verifyUpiOtp}
-                    disabled={upiOtpVerifying || upiOtp.length !== 6}
-                    className="btn-primary shrink-0 px-4"
-                  >
-                    {upiOtpVerifying ? 'Verifying...' : 'Verify'}
-                  </button>
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-[10px] text-muted-foreground">6-digit OTP enter karke Verify dabayein.</p>
-                  <button
-                    type="button"
-                    onClick={() => requestUpiOtp(pendingBusinessForm || form)}
-                    disabled={upiOtpSending || upiOtpCooldown > 0}
-                    className="text-[10px] text-primary font-medium disabled:opacity-50"
-                  >
-                    {upiOtpCooldown > 0 ? `Resend in ${upiOtpCooldown}s` : 'Resend OTP'}
-                  </button>
-                </div>
+                <p className="text-[10px] text-muted-foreground">Bank registered account name</p>
+                <p className="text-sm font-semibold text-foreground mt-0.5">{upiRegisteredName}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">UPI ID verified</p>
               </div>
             )}
           </div>

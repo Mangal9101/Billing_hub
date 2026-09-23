@@ -12,6 +12,7 @@ export default function SettingsPage() {
   const { data, ready, setBusiness } = useAppStore();
   const [form, setForm] = useState({ name: '', address: '', mobile: '', gstNumber: '', upiId: '' });
   const [saving, setSaving] = useState(false);
+  const [upiVerifiedName, setUpiVerifiedName] = useState('');
   const ref = useRef<HTMLInputElement>(null);
   const session = getSession();
 
@@ -75,15 +76,7 @@ export default function SettingsPage() {
         throw new Error('Bank account name could not be retrieved for this UPI ID.');
       }
 
-      setBusiness({
-        name: form.name.trim(),
-        address: form.address.trim(),
-        mobile: form.mobile.trim(),
-        gstNumber: form.gstNumber.trim().toUpperCase(),
-        upiId,
-        upiAccountName: verifiedName,
-      } as any);
-
+      setUpiVerifiedName(verifiedName);
       setForm(current => ({ ...current, upiId }));
       toast.success(`UPI verified. Bank account name: ${verifiedName}`);
     } catch (e: any) {
@@ -178,10 +171,10 @@ export default function SettingsPage() {
               </button>
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">UPI ID enter karke Verify dabayein. Bank se registered account name verify kiya jayega.</p>
-            {data.business.upiAccountName && (
+            {upiVerifiedName && (
               <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3">
                 <p className="text-[10px] text-muted-foreground">Registered Bank Account Name</p>
-                <p className="text-sm font-semibold text-foreground mt-0.5">{data.business.upiAccountName}</p>
+                <p className="text-sm font-semibold text-foreground mt-0.5">{upiVerifiedName}</p>
                 <p className="text-[10px] text-primary font-medium mt-1">✓ UPI ID verified</p>
               </div>
             )}

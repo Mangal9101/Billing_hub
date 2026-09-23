@@ -111,11 +111,15 @@ export async function POST(req: NextRequest) {
     if (!email) return NextResponse.json({ error: 'Business owner email is not available.' }, { status: 400 });
 
     const existing = await supabaseAdmin(
-      `upi_verification_otps?business_id=eq.${encodeURIComponent(businessId)}&requested_by=eq.${encodeURIComponent(String(user.id))}&consumed_at=is.null&select=id`
+      `upi_verification_otps?business_id=eq.${encodeURIComponent(businessId)}&requested_by=eq.${encodeURIComponent(String(user.id))}&consumed_at=is.null&select=id,created_at&order=created_at.desc&limit=1`
     );
     if (existing.ok) {
       const oldRows = await existing.json();
       if (Array.isArray(oldRows) && oldRows.length) {
+        const createdAt = new Date(String(oldRows[0]?.created_at || '')).getTime();
+        if (Number.isFinite(createdAt) && Date.now() - createdAt < 60_000) {
+          return NextResponse.json({ error: 'Please wait a minute before requesting another OTP.' }, { status: 429 });
+        }
         await supabaseAdmin(
           `upi_verification_otps?business_id=eq.${encodeURIComponent(businessId)}&requested_by=eq.${encodeURIComponent(String(user.id))}&consumed_at=is.null`,
           { method: 'PATCH', body: JSON.stringify({ consumed_at: new Date().toISOString() }) }
@@ -144,10 +148,10 @@ export async function POST(req: NextRequest) {
     if (!insert.ok) throw new Error('Unable to create the UPI verification request.');
 
     const apiKey = process.env.RESEND_API_KEY || '';
-    const from = process.env.RESEND_FROM_EMAIL || '';
-    if (!apiKey || !from) {
+    const from = process.env.RESEND_FROM_EMAIL || 'Billing Hub <support@billinghub.in>';
+    if (!apiKey) {
       await supabaseAdmin(`upi_verification_otps?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
-      return NextResponse.json({ error: 'UPI email service is not configured. Add RESEND_API_KEY and RESEND_FROM_EMAIL in Vercel.' }, { status: 500 });
+      return NextResponse.json({ error: 'UPI email service is not configured. Add RESEND_API_KEY in Vercel and verify billinghub.in in Resend.' }, { status: 500 });
     }
 
     const mail = await fetch('https://api.resend.com/emails', {

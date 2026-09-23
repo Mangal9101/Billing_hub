@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       sessionCompanyId = serverSession.companyId;
       sessionRole = serverSession.role;
     } else {
-      const token = (req.headers.get('authorization') || '').replace(/^Bearer\\s+/i, '').trim();
+      const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
       const refreshToken = (req.headers.get('x-refresh-token') || '').trim();
       if (!token) return NextResponse.json({ error: 'Your session has expired. Please sign in again.' }, { status: 401 });
       const auth = await supabaseAuthUserWithRefresh(token, refreshToken);

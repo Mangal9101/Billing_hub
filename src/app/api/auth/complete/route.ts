@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { setServerSession } from '@/lib/server-session';
 import { defaultPermissions } from '@/lib/permissions';
 import {
   getOwnerBusinessId,
@@ -212,6 +213,7 @@ export async function POST(req: NextRequest) {
           }
           const privateDevice = await trustedDevice(uid, deviceId);
           if (!privateDevice.trusted) await trustDevice(uid, privateDevice.deviceHash);
+          await setServerSession({ uid, email: privateBusiness.email, companyId: privateBusiness.businessId, role: 'owner' });
           return NextResponse.json({ ok:true, uid, email:privateBusiness.email, name:privateBusiness.name, companyId:privateBusiness.businessId, role:'owner', permissions:defaultPermissions('owner'), isOwner:true, firstLogin:true });
         }
       }
@@ -235,6 +237,8 @@ export async function POST(req: NextRequest) {
       if (!device.trusted && otpVerified) {
         await trustDevice(uid, device.deviceHash);
       }
+
+      await setServerSession({ uid, email, companyId, role });
 
       return NextResponse.json({
         ok: true,
@@ -266,6 +270,8 @@ export async function POST(req: NextRequest) {
     const business = await ensureOwnerBusiness(user);
     const device = await trustedDevice(uid, deviceId);
     if (!device.trusted) await trustDevice(uid, device.deviceHash);
+
+    await setServerSession({ uid, email: business.email, companyId: business.businessId, role: 'owner' });
 
     return NextResponse.json({
       ok: true,

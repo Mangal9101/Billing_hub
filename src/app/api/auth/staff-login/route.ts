@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { defaultPermissions, sanitizeStaffPermissions } from '@/lib/permissions';
 import { supabaseAdmin } from '@/lib/server-supabase';
+import { setServerSession } from '@/lib/server-session';
 
 const ADMIN_EMAIL = 'mkp94065@gmail.com';
 
@@ -95,6 +96,8 @@ export async function POST(req: NextRequest) {
 
     const role = String(staff.role || 'cashier').toLowerCase() as any;
     const permissions = sanitizeStaffPermissions(role, staff.permissions);
+
+    await setServerSession({ uid: String(staff.user_id), email: String(staff.email || email), companyId: String(staff.business_id), role });
 
     return NextResponse.json({
       ok: true,
